@@ -1,0 +1,9 @@
+*.*
+!.gitignore
+!README.md
+!*.Rnw
+!*.tex
+!*.pdf
+!*.Rdata
+*~
+__*
