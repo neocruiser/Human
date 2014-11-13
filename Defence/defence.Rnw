@@ -1,0 +1,87 @@
+\documentclass{report}
+
+\title{Thesis 2014 - Figures}
+
+\begin{document}
+\maketitle
+
+
+This is the file I used for all animated figures used in my thesis defence.
+<<>>=
+cat("Hello World\n")
+@
+
+Try to animation package. I think I will be using ImageMagick and SWFtools.
+<<>>=
+require(animation)
+@
+
+Simulate static data.
+<<>>=
+x <- rnorm(100)
+y <- 5 + 2*x-4*x^2
+fit <- lm(y~x)
+plot(y~x, col="chocolate",pch=20)
+abline(fit,col="forestgreen",lwd=2)
+pred <- predict(fit)
+segments(x,y,x,pred, lty="dashed")
+points(x,pred,pch=4,cex=.5)
+@
+
+Build a function to draw a \textbf{static} simulated data.
+<<>>=
+lineaire <- function(a){
+x <- rnorm(a)
+y <- 10*x-x^3
+fit <- lm(y~x)
+plot(y~x, col="chocolate",pch=20)
+abline(fit,col="forestgreen",lwd=2)
+}
+lineaire(100)
+@
+
+
+Try to animate a for loop.
+<<>>=
+frames=100
+
+for(i in 1:frames){
+## create a name for each plot
+    if (i < 10) {name = paste("000",i,"plot.png",sep="")}
+    if (i < 100 && i >= 10) {name = paste("00",i,"plot.png",sep="")}
+    if (i >= 100) {name = paste("0",i,"plot.png",sep="")}
+
+    x <- rnorm(frames)
+    y <- 10*x[i]-x[i]^3
+#    fit <- lm(y~x)
+
+    png(name)
+    plot(y~x,pch=20,col="chocolate")
+#    dev.off()
+}
+
+@
+
+
+Plot the number of species that have been extinct in the wild since 1500.
+<<>>=
+setwd("C:/Workshop2014/Presentations/Defence")
+species <- read.table("extinct.txt",sep="\t",header=T)
+require(ggplot2)
+x11()
+ggplot(species, aes(x=Organisme,y=Espece))+
+      geom_bar(colour="black",fill="#DD8888", width=.7,stat="identity")+
+coord_flip()
+
+@
+
+
+\end{document}
+
+
+
+
+
+
+
+

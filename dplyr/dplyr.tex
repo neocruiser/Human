@@ -1,0 +1,530 @@
+\documentclass[9pt,english]{extarticle}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\include{canevas_config}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+\author{Sleiman Bassim, PhD}
+\title{R implementation}
+\maketitle
+\begin{linenumbers}
+
+
+
+Locally loaded functions:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{source}\hlstd{(}\hlstr{"/media/Data/Dropbox/R/01funcs.R"}\hlstd{)}
+\hlcom{#load("", .GlobalEnv)}
+\hlkwd{lsos}\hlstd{(}\hlkwc{pat}\hlstd{=}\hlstr{""}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+                       Type   Size PrettySize Rows Columns
+bagging            function  23520      23 Kb   NA      NA
+bagging.clas       function  24280    23.7 Kb   NA      NA
+baggingTune        function  23856    23.3 Kb   NA      NA
+circos.test        function  55408    54.1 Kb   NA      NA
+Cols               function   6576     6.4 Kb   NA      NA
+ensemble.mean      function  24232    23.7 Kb   NA      NA
+locusRMR           function  11224      11 Kb   NA      NA
+model.clas         function  20680    20.2 Kb   NA      NA
+model.reg          function  18528    18.1 Kb   NA      NA
+modelTune.clas     function  21016    20.5 Kb   NA      NA
+modelTune.reg      function  18864    18.4 Kb   NA      NA
+net2Bin            function  33240    32.5 Kb   NA      NA
+normDataWithin     function  21816    21.3 Kb   NA      NA
+olBarplot          function  31992    31.2 Kb   NA      NA
+overLapper         function  86584    84.6 Kb   NA      NA
+predict.regsubsets function  10208      10 Kb   NA      NA
+range_correlation  function  16472    16.1 Kb   NA      NA
+regfit             function   9912     9.7 Kb   NA      NA
+regfit.int         function  10360    10.1 Kb   NA      NA
+rocplot            function   7768     7.6 Kb   NA      NA
+set.cor            function  10712    10.5 Kb   NA      NA
+set.var            function  12216    11.9 Kb   NA      NA
+summarySE          function  30400    29.7 Kb   NA      NA
+summarySEwithin    function  39616    38.7 Kb   NA      NA
+vennPlot           function 562632   549.4 Kb   NA      NA
+visualizeNet       function  30288    29.6 Kb   NA      NA
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\section{By-group aggregation}
+\label{sec:aggregation}
+
+By-group aggregation uses the principle of split-and-conquer or \textbf{split-apply-combine} a term coined by \href{http://goo.gl/qZIQ8I}{Hadley Wickham}. R jobs will run in parallel across several cores which reduces the calculation time of the row search.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{pkgs} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{'rbenchmark'}\hlstd{,} \hlstr{'doParallel'}\hlstd{,} \hlstr{'foreach'}\hlstd{,} \hlstr{'Hmisc'}\hlstd{,} \hlstr{'dplyr'}\hlstd{,} \hlstr{'plyr'}\hlstd{)}
+\hlkwd{lapply}\hlstd{(pkgs, require,} \hlkwc{character.only} \hlstd{=} \hlnum{TRUE}\hlstd{);}
+\end{alltt}
+\begin{verbatim}
+[[1]]
+[1] TRUE
+
+[[2]]
+[1] TRUE
+
+[[3]]
+[1] TRUE
+
+[[4]]
+[1] TRUE
+
+[[5]]
+[1] TRUE
+
+[[6]]
+[1] TRUE
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Get data from this site \href{http://goo.gl/nB0gAH}{here}. It is in *.xlsx form. Use \verb|read.xlsx| from the package \verb|xlsx| to read in the table into an R dataframe. Put it in a wrapped dataframe with \verb|dplyr| and saved it in a .Rdata file.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{load}\hlstd{(}\hlstr{"LoF_Phase1_v3.Rdata"}\hlstd{, .GlobalEnv)}
+\hlkwd{lsos}\hlstd{(}\hlkwc{pattern}\hlstd{=}\hlstr{"input.*"}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+               Type    Size PrettySize  Rows Columns
+input.df data.frame 2432000     2.3 Mb 10027      20
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+Sampling 1000 rows from the dataset is followed with a grouping and summarizing functions to show detail of the data and the levels of classification.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{indices.df} \hlkwb{<-} \hlkwd{sample}\hlstd{(}\hlnum{1}\hlopt{:}\hlkwd{nrow}\hlstd{(input.df),}\hlnum{1000}\hlstd{)}
+\hlcom{#input.df <- input.df[complete.cases(input.df), ]}
+\hlstd{input.subset.df} \hlkwb{<-} \hlkwd{tbl_df}\hlstd{(input.df[indices.df, ])}
+\hlkwd{str}\hlstd{(input.subset.df)}
+\end{alltt}
+\begin{verbatim}
+Classes 'tbl_df', 'tbl' and 'data.frame':	1000 obs. of  20 variables:
+ $ chr             : Factor w/ 23 levels "1","10","11",..: 3 4 12 2 13 1 18 22 12 15 ...
+ $ pos             : num  67395456 51723598 209204280 95097599 3838285 ...
+ $ rsID            : Factor w/ 5383 levels ".","rs10009430",..: 481 1 1 889 1 1 1145 1 1 4247 ...
+ $ ref_allele      : Factor w/ 145 levels "A","AAACC","AAC",..: 1 1 75 1 33 33 33 75 17 33 ...
+ $ alt_allele      : Factor w/ 89 levels "A","AAC","AAG",..: 65 9 1 20 65 65 65 1 1 1 ...
+ $ ancestral_allele: Factor w/ 125 levels "-",".","A","a",..: 3 3 67 3 29 29 29 67 16 30 ...
+ $ effect          : Factor w/ 2 levels "full","partial": 2 1 2 2 2 2 2 1 1 2 ...
+ $ type            : Factor w/ 3 levels "frameshift_indel",..: 3 1 2 3 3 3 2 3 1 3 ...
+ $ an              : num  2184 2184 2184 2184 2184 ...
+ $ ac              : num  56 327 1 4 1 2 2 1 15 3 ...
+ $ gene            : Factor w/ 6433 levels "A1BG","A2M","A2ML1",..: 3914 1462 4342 3722 3444 2317 5211 2325 3580 605 ...
+ $ gene_id         : Factor w/ 6433 levels "ENSG00000000419.7",..: 3963 2530 1423 2449 616 3511 5115 5072 1738 796 ...
+ $ lof_trans       : num  1 1 1 4 3 1 1 1 1 2 ...
+ $ all_trans       : num  2 1 5 7 4 2 3 1 1 7 ...
+ $ failed_filters  : num  0 0 0 0 0 0 0 0 0 0 ...
+ $ filters_failed  : Factor w/ 69 levels "0","all_alt",..: 1 1 1 1 1 1 1 1 1 1 ...
+ $ splice_type     : Factor w/ 3 levels ".","acceptor",..: 1 1 3 1 1 1 3 1 1 1 ...
+ $ canonical       : Factor w/ 3 levels ".","NO","YES": 1 1 3 1 1 1 3 1 1 1 ...
+ $ other_canonical : Factor w/ 3 levels ".","NO","YES": 1 1 3 1 1 1 3 1 1 1 ...
+ $ intron_length   : Factor w/ 2266 levels ".","1","100",..: 1 1 1523 1 1 1 1910 1 1 1 ...
+\end{verbatim}
+\begin{alltt}
+\hlkwd{unique}\hlstd{(input.subset.df}\hlopt{$}\hlstd{effect)}
+\end{alltt}
+\begin{verbatim}
+[1] partial full   
+Levels: full partial
+\end{verbatim}
+\begin{alltt}
+\hlkwd{unique}\hlstd{(input.subset.df}\hlopt{$}\hlstd{chr)}
+\end{alltt}
+\begin{verbatim}
+ [1] 11 12 2  10 20 1  5  9  22 17 X  7  18 8  16 14 13 19 3  15 6  4  21
+Levels: 1 10 11 12 13 14 15 16 17 18 19 2 20 21 22 3 4 5 6 7 8 9 X
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Extract subsets of the dataframe depending on the "effect" column.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{input.summary} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)\{}
+  \hlstd{y} \hlkwb{<-} \hlkwd{unique}\hlstd{(x)}
+  \hlstd{sub} \hlkwb{=} \hlkwd{list}\hlstd{(}\hlkwa{NULL}\hlstd{)}
+  \hlkwa{for}\hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlkwd{length}\hlstd{(y))\{}
+    \hlstd{sub[[i]]} \hlkwb{<-} \hlkwd{subset}\hlstd{(input.subset.df, x} \hlopt{==} \hlstd{y[i])}
+  \hlstd{\}}
+  \hlstd{sub}
+\hlstd{\}}
+
+\hlstd{testing} \hlkwb{<-} \hlkwd{input.summary}\hlstd{(input.subset.df}\hlopt{$}\hlstd{effect)}
+\hlstd{testing[}\hlnum{1}\hlstd{]}
+\end{alltt}
+\begin{verbatim}
+[[1]]
+Source: local data frame [451 x 20]
+
+     chr       pos        rsID ref_allele alt_allele ancestral_allele  effect
+5721  11  67395456 rs118032721          A          T                A partial
+1538   2 209204280           .          G          A                G partial
+5155  10  95097599 rs140386623          A          C                A partial
+9330  20   3838285           .          C          T                C partial
+887    1 212798487           .          C          T                C partial
+3031   5 150711989 rs142258981          C          T                C partial
+9760  22  36595608 rs192225524          C          A                c partial
+8165  17  61988546 rs139915511          C          T                c partial
+124    1  19810813           .          C         CT                C partial
+5171  10  97959237  rs80337218          C          A                C partial
+..   ...       ...         ...        ...        ...              ...     ...
+Variables not shown: type (fctr), an (dbl), ac (dbl), gene (fctr), gene_id (fctr),
+  lof_trans (dbl), all_trans (dbl), failed_filters (dbl), filters_failed (fctr),
+  splice_type (fctr), canonical (fctr), other_canonical (fctr), intron_length (fctr)
+\end{verbatim}
+\begin{alltt}
+\hlstd{testing[}\hlnum{2}\hlstd{]}
+\end{alltt}
+\begin{verbatim}
+[[1]]
+Source: local data frame [549 x 20]
+
+     chr       pos        rsID ref_allele alt_allele ancestral_allele effect
+6192  12  51723598           .          A         AG                A   full
+4668   9  43627213           .          G          A                G   full
+1597   2 223559986           .         AG          A               AG   full
+9978   X 118222555 rs147204920          G          A                G   full
+9445  20  36869005  rs41282820          G          A                G   full
+3840   7  37936527 rs142525551          C          T                C   full
+4796   9 125273385           .          A         AT                A   full
+8464  18  74090957           .         CG          C                C   full
+4640   9  35376166           .          C          T                C   full
+2990   5 140870416           .          C          T                C   full
+..   ...       ...         ...        ...        ...              ...    ...
+Variables not shown: type (fctr), an (dbl), ac (dbl), gene (fctr), gene_id (fctr),
+  lof_trans (dbl), all_trans (dbl), failed_filters (dbl), filters_failed (fctr),
+  splice_type (fctr), canonical (fctr), other_canonical (fctr), intron_length (fctr)
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\section{Different grouping and summarizing Functions}
+\label{sec:functions}
+
+There is several functions to be used to extract a specific amount of data.
+The \verb|tapply, agreggate, ddply| functions:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{tapply}\hlstd{(input.subset.df}\hlopt{$}\hlstd{pos, input.subset.df}\hlopt{$}\hlstd{effect, mean)}
+\end{alltt}
+\begin{verbatim}
+    full  partial 
+74975657 75445181 
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Extract and visualize a summary of the partial and full effects of variants relative to the nature of the chromosome.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{require}\hlstd{(plyr)}
+\hlstd{output.df} \hlkwb{<-} \hlkwd{ddply}\hlstd{(}
+    \hlstd{input.subset.df,}
+    \hlkwd{c}\hlstd{(}\hlstr{"effect"}\hlstd{,}\hlstr{"chr"}\hlstd{),}
+    \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)\{}
+        \hlkwd{c}\hlstd{(}\hlkwc{count} \hlstd{=} \hlkwd{nrow}\hlstd{(x))}
+    \hlstd{\})}
+\hlcom{## Plot}
+\hlkwd{require}\hlstd{(ggplot2)}
+\hlkwd{ggplot}\hlstd{(output.df)} \hlopt{+}
+    \hlkwd{geom_bar}\hlstd{(}\hlkwd{aes}\hlstd{(}\hlkwc{x} \hlstd{= chr,} \hlkwc{y} \hlstd{= count,} \hlkwc{fill} \hlstd{= effect),}
+             \hlkwc{stat} \hlstd{=} \hlstr{'identity'}\hlstd{,} \hlkwc{position} \hlstd{=} \hlstr{'dodge'}\hlstd{,} \hlkwc{width} \hlstd{=} \hlnum{.7}\hlstd{)} \hlopt{+}
+    \hlkwd{scale_fill_manual}\hlstd{(}\hlstr{"Variant Effect\textbackslash{}n"}\hlstd{,} \hlkwc{values} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"grey"}\hlstd{,} \hlstr{"black"}\hlstd{),}
+                      \hlkwc{labels} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{'full'}\hlstd{,} \hlstr{'partial'}\hlstd{))} \hlopt{+}
+    \hlkwd{labs}\hlstd{(}\hlkwc{x} \hlstd{=} \hlstr{'\textbackslash{}nChromosome'}\hlstd{,} \hlstr{'Count\textbackslash{}n'}\hlstd{)} \hlopt{+}
+    \hlkwd{theme_bw}\hlstd{()}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\linewidth,height=.45\linewidth]{graphics/plotcomaprison-1} 
+
+}
+
+
+
+\end{knitrout}
+
+Visualize a count summary relative to the nature of variants.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{output.df.variants} \hlkwb{<-} \hlkwd{ddply}\hlstd{(}
+    \hlstd{input.subset.df,}
+    \hlkwd{c}\hlstd{(}\hlstr{'effect'}\hlstd{,}\hlstr{'alt_allele'}\hlstd{),}
+    \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)\{}
+    \hlkwd{c}\hlstd{(}\hlkwc{count} \hlstd{=} \hlkwd{nrow}\hlstd{(x))}
+    \hlstd{\})}
+\hlkwd{head}\hlstd{(output.df.variants)}
+\end{alltt}
+\begin{verbatim}
+  effect alt_allele count
+1   full          A   227
+2   full        ACT     1
+3   full         AG     1
+4   full         AT     2
+5   full     ATAAGT     1
+6   full          C    46
+\end{verbatim}
+\begin{alltt}
+\hlkwd{require}\hlstd{(reshape)}
+\hlstd{output.df.reshape} \hlkwb{<-} \hlkwd{cast}\hlstd{(output.df.variants, alt_allele}\hlopt{~}\hlstd{effect)}
+\hlkwd{head}\hlstd{(output.df.reshape)}
+\end{alltt}
+\begin{verbatim}
+  alt_allele full partial
+1          A  227     179
+2         AC   NA       2
+3        ACT    1      NA
+4         AG    1       1
+5         AT    2       1
+6     ATAAGT    1      NA
+\end{verbatim}
+\begin{alltt}
+\hlstd{output.df.reshape[}\hlkwd{is.na}\hlstd{(output.df.reshape)]} \hlkwb{<-} \hlnum{0}
+
+\hlkwd{require}\hlstd{(vegan)}
+\hlstd{output.df.stand} \hlkwb{<-} \hlkwd{decostand}\hlstd{(output.df.variants}\hlopt{$}\hlstd{count,} \hlkwc{method}\hlstd{=}\hlstr{"log"}\hlstd{)}
+\hlstd{output.df.log} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{effect} \hlstd{= output.df.variants}\hlopt{$}\hlstd{effect,}
+                            \hlkwc{pos}\hlstd{= output.df.variants}\hlopt{$}\hlstd{alt_allele,}
+                            \hlkwc{count}\hlstd{= output.df.stand[,}\hlnum{1}\hlstd{])}
+
+\hlkwd{ggplot}\hlstd{(output.df.log)} \hlopt{+}
+    \hlkwd{geom_bar}\hlstd{(}\hlkwd{aes}\hlstd{(}\hlkwc{x} \hlstd{= pos,} \hlkwc{y} \hlstd{= count,} \hlkwc{fill} \hlstd{= effect),}
+             \hlkwc{stat} \hlstd{=} \hlstr{'identity'}\hlstd{,} \hlkwc{position} \hlstd{=} \hlstr{'dodge'}\hlstd{,} \hlkwc{width} \hlstd{=} \hlnum{.7}\hlstd{)} \hlopt{+}
+    \hlkwd{scale_fill_manual}\hlstd{(}\hlstr{"Variant Effect\textbackslash{}n"}\hlstd{,} \hlkwc{values} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"grey"}\hlstd{,} \hlstr{"black"}\hlstd{),}
+                      \hlkwc{labels} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{'full'}\hlstd{,} \hlstr{'partial'}\hlstd{))} \hlopt{+}
+    \hlkwd{labs}\hlstd{(}\hlkwc{x} \hlstd{=} \hlstr{'\textbackslash{}nChromosome'}\hlstd{,} \hlstr{'Count\textbackslash{}n'}\hlstd{)} \hlopt{+}
+    \hlkwd{theme_bw}\hlstd{()}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\linewidth,height=.5\linewidth]{graphics/plotallele-1} 
+
+}
+
+
+
+\end{knitrout}
+
+Create a data frame from a list.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{a.list} \hlkwb{<-} \hlkwd{list}\hlstd{(}\hlkwc{x}\hlstd{=output.df.reshape[,}\hlnum{1}\hlstd{],} \hlkwc{y}\hlstd{=output.df.reshape[,}\hlnum{2}\hlstd{])}
+\hlkwd{system.time}\hlstd{(a.df} \hlkwb{<-} \hlkwd{tbl_df}\hlstd{(}\hlkwd{do.call}\hlstd{(}\hlstr{"rbind.fill"}\hlstd{,}\hlkwd{lapply}\hlstd{(a.list, as.data.frame))))}
+\end{alltt}
+\begin{verbatim}
+   user  system elapsed 
+  0.000   0.000   0.002 
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{registerDoParallel}\hlstd{(}\hlkwc{cores} \hlstd{=} \hlnum{2}\hlstd{)}
+\hlkwd{benchmark}\hlstd{(}\hlkwc{replications}\hlstd{=}\hlnum{100}\hlstd{,} \hlkwd{lapply}\hlstd{(}\hlnum{1}\hlopt{:}\hlnum{3}\hlstd{, sqrt),} \hlkwd{foreach}\hlstd{(}\hlkwc{i}\hlstd{=}\hlnum{1}\hlopt{:}\hlnum{3}\hlstd{)} \hlopt{%do%} \hlkwd{sqrt}\hlstd{(i))}
+\end{alltt}
+\begin{verbatim}
+                           test replications elapsed relative user.self sys.self
+2 foreach(i = 1:3) %do% sqrt(i)          100   0.467       NA     0.464        0
+1             lapply(1:3, sqrt)          100   0.000       NA     0.000        0
+  user.child sys.child
+2          0         0
+1          0         0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsection{More dplyr verbs for data manipulation}
+\label{subsec:verbs}
+Verbs in \verb|dplyr| constitute the essential functions for data manipulation. Five exist and are basic dataframe manipulation functions. \textbf{Filter} to choose rows, \textbf{select} to choose from columns, \textbf{arrange} to order rows, \textbf{mutate} and \textbf{summarize} to make new columns.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{input.subset.df} \hlopt{%>%}
+    \hlkwd{select}\hlstd{(chr, pos, ref_allele, effect)} \hlopt{%>%}
+    \hlkwd{filter}\hlstd{(ref_allele} \hlopt{==} \hlstr{"A"}\hlstd{)} \hlopt{%>%}
+    \hlkwd{group_by}\hlstd{(chr, effect)} \hlopt{%>%}
+    \hlkwd{mutate}\hlstd{(}\hlkwc{pos2} \hlstd{=} \hlkwd{rank}\hlstd{(pos))} \hlopt{%>%}
+    \hlkwd{filter}\hlstd{(pos} \hlopt{<} \hlnum{8.7}\hlopt{*}\hlnum{10}\hlopt{^}\hlnum{6} \hlopt{&} \hlstd{pos} \hlopt{>} \hlnum{8}\hlopt{*}\hlnum{10}\hlopt{^}\hlnum{6} \hlstd{)} \hlopt{%>%}
+    \hlkwd{arrange}\hlstd{(chr, effect, pos2)}
+\end{alltt}
+\begin{verbatim}
+Source: local data frame [0 x 5]
+Groups: chr, effect
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\section{Other options of parallel computing}
+For MySQL try \verb|dbApply()| to aggregate. And \verb|sqldf| will create a temporary database. Or \href{www.bigmemory.org}{bigmemory.org} to load data into memory, or use Hadoop.
+
+
+\section{Top 100 papers cited in Nature}
+Download data from onedrive in xlsx form.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#require(xlsx)}
+\hlcom{#top100 <- read.xlsx("~/Downloads/WebofSciencetop100.xlsx", sheetIndex = "Sheet1")}
+\hlkwd{load}\hlstd{(}\hlstr{"WebofScienceTop100.Rdata"}\hlstd{, .GlobalEnv)}
+\hlstd{top100} \hlkwb{<-} \hlkwd{tbl_df}\hlstd{(top100)}
+\hlkwd{plot}\hlstd{(top100}\hlopt{$}\hlstd{Year,top100}\hlopt{$}\hlstd{Rnk,} \hlkwc{pch} \hlstd{=} \hlnum{20}\hlstd{)}
+\hlkwd{abline}\hlstd{(}\hlkwd{lm}\hlstd{(top100}\hlopt{$}\hlstd{Rank}\hlopt{~}\hlstd{top100}\hlopt{$}\hlstd{Year),} \hlkwc{col} \hlstd{=} \hlstr{"red"}\hlstd{);}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{Warning in model.response(mf, "{}numeric"{}): using type = "{}numeric"{} with a factor response will be ignored}}
+
+{\ttfamily\noindent\color{warningcolor}{Warning in Ops.factor(y, z\$residuals): - not meaningful for factors}}\end{kframe}
+
+{\centering \includegraphics[width=.49\textwidth]{graphics/plotunnamed-chunk-8-1} 
+
+}
+
+
+
+\end{knitrout}
+
+Plot in 3d. \verb|rgl| provides an interactive 3d box.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{require}\hlstd{(scatterplot3d)}
+\hlstd{scat} \hlkwb{<-} \hlkwd{with}\hlstd{(top100,}
+             \hlkwd{scatterplot3d}\hlstd{(Times.cited,}
+                           \hlstd{Year, Rank,} \hlkwc{pch}\hlstd{=}\hlnum{16}\hlstd{,}
+                           \hlkwc{highlight.3d}\hlstd{=}\hlnum{TRUE}\hlstd{,}
+                           \hlkwc{type}\hlstd{=}\hlstr{"h"}
+                           \hlstd{)}
+             \hlstd{)}
+\hlstd{fit} \hlkwb{<-} \hlkwd{with}\hlstd{(top100,} \hlkwd{lm}\hlstd{(Rank}\hlopt{~}\hlstd{Times.cited}\hlopt{+}\hlstd{Year))}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{Warning in model.response(mf, "{}numeric"{}): using type = "{}numeric"{} with a factor response will be ignored}}
+
+{\ttfamily\noindent\color{warningcolor}{Warning in Ops.factor(y, z\$residuals): - not meaningful for factors}}\begin{alltt}
+\hlstd{scat}\hlopt{$}\hlkwd{plane3d}\hlstd{(fit)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=.49\textwidth]{graphics/plotunnamed-chunk-9-1} 
+
+}
+
+
+
+\end{knitrout}
+
+
+
+\newpage
+\section{System Information}
+\label{sec:sys_info}
+
+The version number of R and packages loaded for generating the vignette were:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{verbatim}
+R version 3.1.1 (2014-07-10)
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+locale:
+ [1] LC_CTYPE=en_CA.UTF-8       LC_NUMERIC=C               LC_TIME=en_CA.UTF-8       
+ [4] LC_COLLATE=en_CA.UTF-8     LC_MONETARY=en_CA.UTF-8    LC_MESSAGES=en_CA.UTF-8   
+ [7] LC_PAPER=en_CA.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
+[10] LC_TELEPHONE=C             LC_MEASUREMENT=en_CA.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+ [1] splines   grid      parallel  stats     graphics  grDevices utils     datasets 
+ [9] methods   base     
+
+other attached packages:
+ [1] scatterplot3d_0.3-35 vegan_2.0-10         permute_0.8-3       
+ [4] reshape_0.8.5        ggplot2_1.0.0        plyr_1.8.1          
+ [7] dplyr_0.2            Hmisc_3.14-5         Formula_1.1-2       
+[10] survival_2.37-7      lattice_0.20-29      doParallel_1.0.8    
+[13] iterators_1.0.7      foreach_1.4.2        rbenchmark_1.0.0    
+[16] knitr_1.7           
+
+loaded via a namespace (and not attached):
+ [1] acepack_1.3-3.3     assertthat_0.1      cluster_1.15.3      codetools_0.2-9    
+ [5] colorspace_1.2-4    compiler_3.1.1      digest_0.6.4        evaluate_0.5.5     
+ [9] foreign_0.8-61      formatR_1.0         gtable_0.1.2        highr_0.3          
+[13] labeling_0.3        latticeExtra_0.6-26 magrittr_1.0.1      MASS_7.3-35        
+[17] munsell_0.4.2       nnet_7.3-8          proto_0.3-10        RColorBrewer_1.0-5 
+[21] Rcpp_0.11.3         reshape2_1.4        rpart_4.1-8         scales_0.2.4       
+[25] stringr_0.6.2       tools_3.1.1        
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+\end{linenumbers}
+\end{document}
+
+
+

@@ -1,0 +1,82 @@
+%% definition of commands
+\newcommand{\myTitle}{Research of variants in brain diseases\xspace}
+\newcommand{\myName}{Sleiman Bassim\xspace}
+\newcommand{\myUni}{University of Vermont\xspace}
+\newcommand{\myFaculty}{Department of Microbiology, Molecular Genetics, and Computer Science\xspace}
+\newcommand{\mySubtitle}{Postdoc Research\xspace}
+\newcommand{\myDegree}{PhD\xspace}
+\newcommand{\myLocation}{Vermont\xspace}
+\newcommand{\myTime}{2014-2015\xspace}
+
+%% get the spacing after macros right
+\usepackage{xspace}
+
+%% set margins for note insertion
+\usepackage{marginnote}
+\usepackage{todonotes}
+
+%% margins and margin notes
+\usepackage[top=1.5cm, bottom=1.5cm, left=.5cm, right=.5cm, outer=5cm, inner=2cm, marginparwidth=4cm, marginparsep=.35cm]{geometry}
+
+%% line numbering
+\usepackage{lineno}
+
+%% fonts
+%\usepackage{lmodern}
+\usepackage[sc]{mathpazo}
+\usepackage[T1]{fontenc} 
+\usepackage[utf8]{inputenc}
+
+%% language
+\usepackage{babel}
+
+%% math
+\usepackage{amssymb,amsmath,wasysym}
+
+%% floats
+\usepackage{float,fixltx2e}
+
+%% references bibliography
+\usepackage[round,colon]{natbib}
+
+%% formatter le titre des tables
+\usepackage[font=small, labelfont=bf,belowskip=10pt,aboveskip=0pt]{caption, ragged2e}
+
+%% remove space around inserted floating objects\\
+\setlength{\intextsep}{10pt plus 2pt minus 2pt}	
+
+%% line spacing
+\linespread{1} % a bit more for Palatino
+
+%% graphics and eps importation
+\PassOptionsToPackage{pdftex}{graphicx}
+\usepackage{graphicx,epstopdf,tocloft}
+
+%% espace entre titre de section
+\usepackage[compact]{titlesec} \titlespacing{\section}{0pt}{*0}{*0}
+\titlespacing{\subsection}{0pt}{*0}{*0}
+\titlespacing{\subsubsection}{0pt}{*0}{*0}
+
+%% hyperlinks
+\usepackage{hyperref} \hypersetup{
+  % Uncomment the line below to remove all links
+  colorlinks=true, linktocpage=true, pdfstartview=FitV,
+  pdfstartpage=2,
+  % Uncomment the line below if you want to have black links
+  % colorlinks=false, linktocpage=false, pdfborder={0 0 0},
+  % pdfstartpage=3, pdfstartview=FitV,
+  breaklinks=true, pdfpagemode=UseNone, pageanchor=true,
+  pdfpagemode=UseOutlines, plainpages=false, bookmarksnumbered,
+  bookmarksopen=true, bookmarksopenlevel=1, hypertexnames=true,
+  pdfhighlight=/O, urlcolor=red, linkcolor=RoyalBlue,
+  citecolor=MidnightBlue,
+  % PDF file meta-information
+  pdftitle={\myTitle}, pdfauthor={\textcopyright\ \myName, \myUni,
+    \myFaculty}, pdfsubject={Molecular Genetics}, pdfkeywords={Postdoc
+    Research}, pdfcreator={pdfLaTeX}, pdfproducer={LaTeX with
+    hyperref} }
+
+%% paragraph indent and break
+%% disable the standard Anglo-American publishers' practice of no indentation
+\setlength{\parindent}{0cm}
+\usepackage{indentfirst}

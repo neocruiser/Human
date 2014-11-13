@@ -1,0 +1,234 @@
+\documentclass[9pt,english]{extarticle}
+\include{canevas_config}
+\begin{document}
+\author{Sleiman Bassim, PhD}
+\title{R implementation}
+\maketitle
+\begin{linenumbers}
+
+<<setup, include=FALSE, cache=FALSE>>=
+# set global chunk options
+opts_chunk$set(
+                dev            = "postscript",
+                fig.path       = "graphics/plot",
+                fig.lp         = "",
+                comment        = NA,
+                fig.keep       = "high",
+                fig.show       = 'hold',
+                fig.align      = 'center', 
+                out.width      = '.49\\textwidth',
+                tidy.source    = TRUE,
+                crop           = TRUE,
+                results        = "markup",
+                warnings       = FALSE,
+                error          = FALSE,
+                message        = FALSE)
+options(
+        formatR.arrow = TRUE,
+        width         = 85,
+        digits        = 3,
+        scipen        = 6)
+@ 
+
+Locally loaded functions:
+<<loading, results=FALSE>>=
+source("/media/Data/Dropbox/R/01funcs.R")
+#load("", .GlobalEnv)
+lsos(pat="")
+@ 
+
+\section{By-group aggregation}
+\label{sec:aggregation}
+
+By-group aggregation uses the principle of split-and-conquer or \textbf{split-apply-combine} a term coined by \href{http://goo.gl/qZIQ8I}{Hadley Wickham}. R jobs will run in parallel across several cores which reduces the calculation time of the row search.
+<<packages,results=FALSE>>=
+
+pkgs <- c('rbenchmark', 'doParallel', 'foreach', 'Hmisc', 'dplyr', 'plyr')
+lapply(pkgs, require, character.only = TRUE);
+
+@ 
+
+Get data from this site \href{http://goo.gl/nB0gAH}{here}. It is in *.xlsx form. Use \verb|read.xlsx| from the package \verb|xlsx| to read in the table into an R dataframe. Put it in a wrapped dataframe with \verb|dplyr| and saved it in a .Rdata file.
+<<>>=
+
+load("LoF_Phase1_v3.Rdata", .GlobalEnv) 
+lsos(pattern="input.*")
+
+@ 
+
+
+Sampling 1000 rows from the dataset is followed with a grouping and summarizing functions to show detail of the data and the levels of classification.
+<<>>=
+
+indices.df <- sample(1:nrow(input.df),1000)
+#input.df <- input.df[complete.cases(input.df), ]
+input.subset.df <- tbl_df(input.df[indices.df, ])
+str(input.subset.df)
+unique(input.subset.df$effect)
+unique(input.subset.df$chr)
+
+@ 
+
+Extract subsets of the dataframe depending on the "effect" column.
+<<>>=
+
+input.summary <- function(x){
+  y <- unique(x)
+  sub = list(NULL)
+  for(i in 1:length(y)){
+    sub[[i]] <- subset(input.subset.df, x == y[i])
+  }
+  sub
+}
+
+testing <- input.summary(input.subset.df$effect)
+testing[1]
+testing[2]
+
+@ 
+
+\section{Different grouping and summarizing Functions}
+\label{sec:functions}
+
+There is several functions to be used to extract a specific amount of data.
+The \verb|tapply, agreggate, ddply| functions:
+<<>>=
+
+tapply(input.subset.df$pos, input.subset.df$effect, mean)
+
+@ 
+
+Extract and visualize a summary of the partial and full effects of variants relative to the nature of the chromosome.
+<<comaprison,out.width='\\linewidth',out.height='.45\\linewidth'>>=
+
+require(plyr)
+output.df <- ddply(
+    input.subset.df, 
+    c("effect","chr"), 
+    function(x){
+        c(count = nrow(x))
+    })
+## Plot
+require(ggplot2)
+ggplot(output.df) +
+    geom_bar(aes(x = chr, y = count, fill = effect),
+             stat = 'identity', position = 'dodge', width = .7) +
+    scale_fill_manual("Variant Effect\n", values = c("grey", "black"),
+                      labels = c('full', 'partial')) +
+    labs(x = '\nChromosome', 'Count\n') +
+    theme_bw()
+
+@ 
+
+Visualize a count summary relative to the nature of variants.
+<<allele, results=FALSE, out.width="\\linewidth", out.height=".5\\linewidth">>=
+
+output.df.variants <- ddply(
+    input.subset.df,
+    c('effect','alt_allele'),
+    function(x){
+    c(count = nrow(x))
+    })
+head(output.df.variants)
+
+require(reshape)
+output.df.reshape <- cast(output.df.variants, alt_allele~effect)
+head(output.df.reshape)
+output.df.reshape[is.na(output.df.reshape)] <- 0
+
+require(vegan)
+output.df.stand <- decostand(output.df.variants$count, method="log")
+output.df.log <- data.frame(effect = output.df.variants$effect, 
+                            pos= output.df.variants$alt_allele,
+                            count= output.df.stand[,1])
+
+ggplot(output.df.log) +
+    geom_bar(aes(x = pos, y = count, fill = effect),
+             stat = 'identity', position = 'dodge', width = .7) +
+    scale_fill_manual("Variant Effect\n", values = c("grey", "black"),
+                      labels = c('full', 'partial')) +
+    labs(x = '\nChromosome', 'Count\n') +
+    theme_bw()
+
+@ 
+
+Create a data frame from a list.
+<<>>=
+
+a.list <- list(x=output.df.reshape[,1], y=output.df.reshape[,2])
+system.time(a.df <- tbl_df(do.call("rbind.fill",lapply(a.list, as.data.frame))))
+
+@ 
+
+<<>>=
+
+registerDoParallel(cores = 2)
+benchmark(replications=100, lapply(1:3, sqrt), foreach(i=1:3) %do% sqrt(i))
+  
+@ 
+
+\subsection{More dplyr verbs for data manipulation}
+\label{subsec:verbs}
+Verbs in \verb|dplyr| constitute the essential functions for data manipulation. Five exist and are basic dataframe manipulation functions. \textbf{Filter} to choose rows, \textbf{select} to choose from columns, \textbf{arrange} to order rows, \textbf{mutate} and \textbf{summarize} to make new columns.
+<<>>=
+
+input.subset.df %>%
+    select(chr, pos, ref_allele, effect) %>%
+    filter(ref_allele == "A") %>%
+    group_by(chr, effect) %>%
+    mutate(pos2 = rank(pos)) %>%
+    filter(pos < 8.7*10^6 & pos > 8*10^6 ) %>%
+    arrange(chr, effect, pos2)
+
+@ 
+
+\section{Other options of parallel computing}
+For MySQL try \verb|dbApply()| to aggregate. And \verb|sqldf| will create a temporary database. Or \href{www.bigmemory.org}{bigmemory.org} to load data into memory, or use Hadoop.
+
+
+\section{Top 100 papers cited in Nature}
+Download data from onedrive in xlsx form.
+<<>>=
+
+#require(xlsx)
+#top100 <- read.xlsx("~/Downloads/WebofSciencetop100.xlsx", sheetIndex = "Sheet1")
+load("WebofScienceTop100.Rdata", .GlobalEnv) 
+top100 <- tbl_df(top100)
+plot(top100$Year,top100$Rnk, pch = 20)
+abline(lm(top100$Rank~top100$Year), col = "red");
+
+@ 
+
+Plot in 3d. \verb|rgl| provides an interactive 3d box.
+<<>>=
+require(scatterplot3d)
+scat <- with(top100, 
+             scatterplot3d(Times.cited, 
+                           Year, Rank, pch=16, 
+                           highlight.3d=TRUE, 
+                           type="h"
+                           )
+             )
+fit <- with(top100, lm(Rank~Times.cited+Year))
+scat$plane3d(fit)
+
+@ 
+
+
+
+\newpage
+\section{System Information}
+\label{sec:sys_info}
+
+The version number of R and packages loaded for generating the vignette were:
+<<sessionInfo, echo=FALSE>>=
+#save(list=ls(pattern=".*|.*"),file="WebofScienceTop100.Rdata")
+sessionInfo()
+@ 
+
+
+\end{linenumbers}
+\end{document}
+
+
+

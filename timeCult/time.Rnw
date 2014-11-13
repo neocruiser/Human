@@ -1,0 +1,87 @@
+\documentclass{report}
+\begin{document}
+
+
+Load timeCult file. Data are in raw condition.
+<<>>=
+#setwd("C:/Dropbox/Workshop2013/Work/R/timeCult/")
+#raw.data <- read.csv("time2.csv",header=T,sep=",")
+#head(raw.data)
+#str(raw.data)
+@
+
+Select the rows you want to include in your analysis. Every row is a
+tracked day.
+<<>>=
+#hours <- raw.data[,c(1,3:4),drop=F]
+#x <- hours[,]
+#dim(x)
+@
+
+Save working data into a text file.\\
+Remove header then replace ':' with '\t'.
+<<>>=
+#write.table(x,"hours2.txt",sep="\t",quote=F)
+@
+
+Read in the edited text file.\\
+To convert hours into minutes, multiply V4 by 60.\\
+Remove V6, the column that include the seconds.\\
+Combine the sum V4 and V5 to unify the tracking of minutes.
+<<>>=
+y <- read.table("hours2.txt",sep="\t")
+y$V4 <- y$V4*60
+data.minutes <- data.frame(day=y$V2, subject=y$V3, time=rowSums(y[,4:5]))
+head(data.minutes)
+ordered.dat <- data.minutes[order(data.minutes[,2]),]
+head(ordered.dat)
+summary(ordered.dat)
+@
+
+Convert time back to hours.
+Store data into a timeseries object.
+Plot Paper 1
+<<>>=
+ordered.dat$time <- ordered.dat$time/24
+paper1 <- ordered.dat[ordered.dat[,2] %in% "Paper 1",]
+summary(paper1)
+finaldat <- paper1[order(paper1[,3], decreasing=T),]
+head(finaldat)
+ts.min <- ts(finaldat[-1,])
+plot(ts.min, plot.type = 'single')
+@
+
+
+When working with dates
+<<>>=
+#date <-strptime(as.character(date), "%m/%d/%y")
+@
+
+Plot using ggplot.
+Scatterplot.
+Although the idle time was removed for better interpretability.
+<<>>=
+dat.less <- ordered.dat[! ordered.dat$subject %in% "Idle",]
+summary(dat.less)
+require(ggplot2)
+ggplot(dat.less, aes(day,time))+
+    geom_point(aes(size=time, color=subject))
+@
+
+
+Barplot using ggplot but with the summary of all hours
+<<>>=
+full.time <- read.table("full.time.txt",sep="\t")
+ggplot(full.time, aes(x=V1,y=V2))+
+      geom_bar(colour="black",fill="#DD8888", width=.7,stat="identity")
+@
+
+
+
+
+
+
+
+\end{document}
+
+

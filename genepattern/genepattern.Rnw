@@ -1,0 +1,84 @@
+\documentclass[9pt,english]{extarticle}
+\include{canevas_config}
+\begin{document}
+\author{Sleiman Bassim, PhD}
+\title{R implementation}
+\maketitle
+\begin{linenumbers}
+<<setup, include=FALSE, cache=FALSE>>=
+# set global chunk options
+opts_chunk$set(dev="postscript",
+               fig.path="graphics/plot",
+               fig.lp= "",
+               comment=NA,
+               fig.keep="high",
+               fig.show='hold',
+               fig.align='center', 
+               out.width='.49\\textwidth',
+               tidy.source=TRUE,
+               crop=TRUE,
+               results="markup",
+               warnings=FALSE,
+               error=FALSE,
+               message=FALSE)
+options(formatR.arrow=TRUE,
+        width=70,
+        digits = 3,
+        scipen = 6)
+@ 
+
+\noindent
+Loaded functions:
+<<loading,results=FALSE>>=
+source("/media/Data/Dropbox/R/01funcs.R")
+#load("", .GlobalEnv)
+lsos()
+@ 
+
+\section{Testing the GenePattern package}
+\label{sec:testing}
+First thing is to install the package from the \href{http://www.broadinstitute.org/cancer/software/genepattern/gp_guides/programmers/sections/gp_r}{website}.
+<<>>=
+#install.packages("full-path-to-GenePattern-R-package", type="source", repos=NULL)
+@ 
+
+Load my credentials to login to GenePattern website and use their tools locally.
+<<keys, results=FALSE>>=
+load("keys.Rdata", .GlobalEnv)
+
+@ 
+
+Obtain a GPClient object which references a specific server and user.
+<<>>=
+require(GenePattern)
+gp.client <- gp.login(servername, username, password)
+
+@ 
+
+\section{Testing a dataset with some modules from GenePattern}
+\label{sec:datasets}
+Load a random dataset to preprocess it.
+<<>>=
+input.ds1 <- "ftp://ftp.broadinstitute.org/pub/genepattern/all_aml/all_aml_train.res"
+@ 
+
+To preprocess the dataset several modules can be invoked.
+<<>>=
+## not working because the servername (in the keys.Rdata) is not set correctly
+#preprocess.ds1 <- run.analysis(gp.client, "PreprocessDataset", input.filename=input.ds1)
+@ 
+
+
+\section{System Information}
+\label{sec:sys_info}
+\noindent
+The version number of R and packages loaded for generating the vignette were:
+<<sessionInfo, echo=FALSE>>=
+#save(list=ls(pattern=".*|.*"),file=".Rdata")
+sessionInfo()
+@ 
+
+
+
+\end{linenumbers}
+\end{document}

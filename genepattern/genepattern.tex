@@ -1,0 +1,191 @@
+\documentclass[9pt,english]{extarticle}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\include{canevas_config}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+\author{Sleiman Bassim, PhD}
+\title{R implementation}
+\maketitle
+\begin{linenumbers}
+
+
+\noindent
+Loaded functions:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{source}\hlstd{(}\hlstr{"/media/Data/Dropbox/R/01funcs.R"}\hlstd{)}
+\hlcom{#load("", .GlobalEnv)}
+\hlkwd{lsos}\hlstd{()}
+\end{alltt}
+\begin{verbatim}
+                        Type   Size PrettySize Rows Columns
+bagging             function  23520      23 Kb   NA      NA
+bagging.clas        function  24280    23.7 Kb   NA      NA
+baggingTune         function  23856    23.3 Kb   NA      NA
+circos.test         function  55408    54.1 Kb   NA      NA
+Cols                function   6576     6.4 Kb   NA      NA
+ensemble.mean       function  24232    23.7 Kb   NA      NA
+locusRMR            function  11224      11 Kb   NA      NA
+model.clas          function  20680    20.2 Kb   NA      NA
+model.reg           function  18528    18.1 Kb   NA      NA
+modelTune.clas      function  21016    20.5 Kb   NA      NA
+modelTune.reg       function  18864    18.4 Kb   NA      NA
+net2Bin             function  33240    32.5 Kb   NA      NA
+normDataWithin      function  21816    21.3 Kb   NA      NA
+olBarplot           function  31992    31.2 Kb   NA      NA
+overLapper          function  86584    84.6 Kb   NA      NA
+password           character    104  104 bytes    1      NA
+predict.regsubsets  function  10208      10 Kb   NA      NA
+range_correlation   function  16472    16.1 Kb   NA      NA
+regfit              function   9912     9.7 Kb   NA      NA
+regfit.int          function  10360    10.1 Kb   NA      NA
+rocplot             function   7768     7.6 Kb   NA      NA
+servername         character    120  120 bytes    1      NA
+set.cor             function  10712    10.5 Kb   NA      NA
+set.var             function  12216    11.9 Kb   NA      NA
+summarySE           function  30400    29.7 Kb   NA      NA
+summarySEwithin     function  39616    38.7 Kb   NA      NA
+username           character    120  120 bytes    1      NA
+vennPlot            function 562632   549.4 Kb   NA      NA
+visualizeNet        function  30288    29.6 Kb   NA      NA
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\section{Testing the GenePattern package}
+\label{sec:testing}
+First thing is to install the package from the \href{http://www.broadinstitute.org/cancer/software/genepattern/gp_guides/programmers/sections/gp_r}{website}.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#install.packages("full-path-to-GenePattern-R-package", type="source", repos=NULL)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Load my credentials to login to GenePattern website and use their tools locally.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{load}\hlstd{(}\hlstr{"keys.Rdata"}\hlstd{, .GlobalEnv)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Obtain a GPClient object which references a specific server and user.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{require}\hlstd{(GenePattern)}
+\hlstd{gp.client} \hlkwb{<-} \hlkwd{gp.login}\hlstd{(servername, username, password)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\section{Testing a dataset with some modules from GenePattern}
+\label{sec:datasets}
+Load a random dataset to preprocess it.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{input.ds1} \hlkwb{<-} \hlstr{"ftp://ftp.broadinstitute.org/pub/genepattern/all_aml/all_aml_train.res"}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+To preprocess the dataset several modules can be invoked.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{## not working because the servername (in the keys.Rdata) is not set correctly}
+\hlcom{#preprocess.ds1 <- run.analysis(gp.client, "PreprocessDataset", input.filename=input.ds1)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+\section{System Information}
+\label{sec:sys_info}
+\noindent
+The version number of R and packages loaded for generating the vignette were:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{verbatim}
+R version 3.1.1 (2014-07-10)
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+locale:
+ [1] LC_CTYPE=en_CA.UTF-8          LC_NUMERIC=C                 
+ [3] LC_TIME=en_CA.UTF-8           LC_COLLATE=en_CA.UTF-8       
+ [5] LC_MONETARY=en_CA.UTF-8       LC_MESSAGES=en_CA.UTF-8      
+ [7] LC_PAPER=en_CA.UTF-8          LC_NAME=en_CA.UTF-8          
+ [9] LC_ADDRESS=en_CA.UTF-8        LC_TELEPHONE=en_CA.UTF-8     
+[11] LC_MEASUREMENT=en_CA.UTF-8    LC_IDENTIFICATION=en_CA.UTF-8
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods  
+[7] base     
+
+other attached packages:
+[1] GenePattern_1.0.2 rJava_0.9-6       knitr_1.6        
+
+loaded via a namespace (and not attached):
+[1] compiler_3.1.1 evaluate_0.5.5 formatR_1.0    highr_0.3     
+[5] stringr_0.6.2  tools_3.1.1   
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+
+\end{linenumbers}
+\end{document}

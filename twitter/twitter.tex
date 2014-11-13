@@ -1,0 +1,360 @@
+\documentclass[9pt,english]{extarticle}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\include{canevas_config}
+
+\title{R implementation}
+\author{Sleiman Bassim, PhD}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+\maketitle
+\begin{linenumbers}
+
+
+ 
+
+\section{Explore Twitter using R}
+\label{sec:explore}
+
+
+\noindent
+Load packages for data mining of tweets. \emph{twitteR} for accessing twitter, \emph{tm} for semantic mining, and \emph{wordcloud} to visualize the results.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(ROAuth);}
+\hlkwd{library}\hlstd{(dplyr);}
+\hlkwd{setwd}\hlstd{(}\hlstr{"/media/Data/Dropbox/R/twitter"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection{Update to latest version of twitteR}
+\label{subsec:twitteR}
+
+\noindent
+Install an updated version of \emph{twitteR} from github.
+\marginnote{Installation from CRAN did not result in an updated version of \emph{twitteR}. Github installs a dev version.}[1cm]
+Run all this chunk ONCE! then RESTART R session!
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#install.packages(c("devtools","rjson","bit64","httr"));}
+\hlcom{#library(devtools);}
+\hlcom{#install_github("twitteR",username="geoffjentry");}
+\hlkwd{library}\hlstd{(twitteR);}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+\subsection{Authentication settings from Twitter}
+\label{subsec:authenticate}
+
+\noindent
+From the application settings \href{https://apps.twitter.com/app/6985014/keys}{twitter} I will get the access keys to authenticate with twitter. Follow \href{http://geoffjentry.hexdump.org/twitteR.pdf}{this} tutorial under section 3 for additional settings.
+Get keys after setting an app in Twitter \textbf{hint} for a valid URL use http://test.de/ 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{source}\hlstd{(}\hlstr{"keys.R"}\hlstd{)}
+\hlkwd{setup_twitter_oauth}\hlstd{(api_key, api_secret, access_token, access_secret)}
+\end{alltt}
+\begin{verbatim}
+[1] "Using direct authentication"
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsection{Testing authentication}
+\label{subsec:test_oauth}
+
+\noindent
+Getting some of the trends that are popular. But first convert to dplyr wrapper dataframe.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{current_trends} \hlkwb{<-} \hlkwd{availableTrendLocations}\hlstd{()}
+\hlkwd{head}\hlstd{(current_trends)}
+\end{alltt}
+\begin{verbatim}
+       name country woeid
+1 Worldwide             1
+2  Winnipeg  Canada  2972
+3    Ottawa  Canada  3369
+4    Quebec  Canada  3444
+5  Montreal  Canada  3534
+6   Toronto  Canada  4118
+\end{verbatim}
+\begin{alltt}
+\hlstd{montreal_trends} \hlkwb{<-} \hlkwd{getTrends}\hlstd{(}\hlnum{3534}\hlstd{)}
+\hlstd{mt_df} \hlkwb{<-} \hlkwd{tbl_df}\hlstd{(montreal_trends)}
+\hlstd{mt_df}
+\end{alltt}
+\begin{verbatim}
+Source: local data frame [10 x 4]
+
+              name
+1           Québec
+2         Montréal
+3         #Salvail
+4       Windows 10
+5           Canada
+6          Toronto
+7            Texas
+8      #1DProposal
+9  #VerifiedNordan
+10       Halloween
+Variables not shown: url (chr), query (chr),
+  woeid (chr)
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsection{Transforming data }
+\label{subsec:transformation}
+
+\noindent
+Retrieve a user current timeline
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{keywords} \hlkwb{<-} \hlkwd{userTimeline}\hlstd{(}\hlstr{"genomicsedu"}\hlstd{,} \hlkwc{n}\hlstd{=}\hlnum{100}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+\noindent
+The list of tweets is transformed into a data frame. You can use \verb|tbl_df| to wrapp the dataframe. 
+Manipulate the text by removing generic and non relevant strings and clarifying the sentences and to keep important keywords from the tweets.
+\verb|Do.call| works fine in R but not in knitr, so run the chunk in R first, then in knitr, then load the text mining (tm) package. 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{require}\hlstd{(plyr);}
+\hlstd{ask.api} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{hash}\hlstd{,}\hlkwc{n}\hlstd{)\{}
+    \hlstd{a} \hlkwb{<-} \hlkwd{searchTwitter}\hlstd{(hash,} \hlkwc{n}\hlstd{=n)}
+    \hlstd{b} \hlkwb{<-} \hlkwd{tbl_df}\hlstd{(}\hlkwd{do.call}\hlstd{(}\hlstr{"rbind.fill"}\hlstd{,}\hlkwd{lapply}\hlstd{(a, as.data.frame)))}
+\hlstd{\}}
+\hlstd{data.tweets} \hlkwb{<-} \hlkwd{ask.api}\hlstd{(}\hlkwc{hash}\hlstd{=}\hlstr{"#genomics"}\hlstd{,}\hlkwc{n}\hlstd{=}\hlnum{1000}\hlstd{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{Warning: 1000 tweets were requested but the API can only return 100}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{Error: cannot coerce class "{}structure("{}status"{}, package = "{}twitteR"{})"{} to a data.frame}}\begin{alltt}
+\hlkwd{dim}\hlstd{(data.tweets)}
+\end{alltt}
+\begin{verbatim}
+[1] 100  16
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Build a text mining wrapper function then inspect the extracted dataframe.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(tm);}
+\hlstd{rm.generic} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{,}\hlkwc{language}\hlstd{,}\hlkwc{words}\hlstd{)\{}
+    \hlstd{a} \hlkwb{<-} \hlkwd{Corpus}\hlstd{(}\hlkwd{VectorSource}\hlstd{(x[,}\hlnum{1}\hlstd{]))}
+    \hlstd{a} \hlkwb{<-} \hlkwd{tm_map}\hlstd{(a, removePunctuation)}
+    \hlstd{a} \hlkwb{<-} \hlkwd{tm_map}\hlstd{(a, removeNumbers)}
+    \hlstd{a} \hlkwb{<-} \hlkwd{tm_map}\hlstd{(a, tolower)}
+    \hlstd{b} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{stopwords}\hlstd{(language),words)}
+\hlcom{#    a <- tm_map(a, removeWords, b)}
+    \hlstd{a} \hlkwb{<-} \hlkwd{tm_map}\hlstd{(a,PlainTextDocument)}
+\hlstd{\}}
+\hlstd{testing} \hlkwb{<-} \hlkwd{rm.generic}\hlstd{(data.tweets,} \hlkwc{lang}\hlstd{=}\hlstr{'english'}\hlstd{,} \hlkwc{words}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"the"}\hlstd{,}\hlstr{"tvtag"}\hlstd{,}\hlstr{"but"}\hlstd{))}
+\hlcom{#inspect(testing)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+\subsection{Build a document-term matrix to setup a cloud-word}
+
+\label{subsec:label}
+\label{subsec:wordcloud}
+
+\noindent
+Additional text mining can be used to find the origin of the used words and meging them together. It is called stemming. Finding the source of every word.
+First, build the document-term matrix then inspects it and the most popular words to find associated terms and their score to the related hashtag (up).
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{my.dt} \hlkwb{<-} \hlkwd{DocumentTermMatrix}\hlstd{(testing)}
+\hlstd{my.dt}
+\end{alltt}
+\begin{verbatim}
+<<DocumentTermMatrix (documents: 100, terms: 370)>>
+Non-/sparse entries: 1030/35970
+Sparsity           : 97%
+Maximal term length: 24
+Weighting          : term frequency (tf)
+\end{verbatim}
+\begin{alltt}
+\hlkwd{findFreqTerms}\hlstd{(my.dt,} \hlkwc{lowfreq} \hlstd{=} \hlnum{30}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+[1] "salvail"
+\end{verbatim}
+\begin{alltt}
+\hlkwd{findAssocs}\hlstd{(my.dt,} \hlstr{'genomics'}\hlstd{,} \hlnum{.2}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+$genomics
+numeric(0)
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Store words relatively to their frequency scores then finally use \verb|wordcloud| to plot the text mining results.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{r.matrix} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(my.dt)}
+\hlstd{r.freq} \hlkwb{<-} \hlkwd{colSums}\hlstd{(r.matrix)}
+\hlstd{r.freq.df} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{term}\hlstd{=}\hlkwd{names}\hlstd{(r.freq),} \hlkwc{r.freq}\hlstd{=r.freq,} \hlkwc{stringsAsFactors} \hlstd{=} \hlnum{FALSE}\hlstd{)}
+\hlstd{r.freq.df} \hlkwb{<-} \hlstd{r.freq.df}\hlopt{%>%}\hlkwd{arrange}\hlstd{(}\hlkwd{desc}\hlstd{(r.freq))}
+
+\hlkwd{library}\hlstd{(RColorBrewer);}
+\hlstd{pal} \hlkwb{<-} \hlkwd{brewer.pal}\hlstd{(}\hlnum{5}\hlstd{,} \hlstr{"Dark2"}\hlstd{)}
+\hlkwd{library}\hlstd{(wordcloud);}
+\hlkwd{wordcloud}\hlstd{(r.freq.df}\hlopt{$}\hlstd{term, r.freq.df}\hlopt{$}\hlstd{r.freq,} \hlkwc{min.freq}\hlstd{=}\hlnum{20}\hlstd{,}\hlkwc{random.color}\hlstd{=}\hlnum{FALSE}\hlstd{,}\hlkwc{colors}\hlstd{=pal)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=.49\textwidth]{graphics/plotunnamed-chunk-3} 
+
+}
+
+
+
+\end{knitrout}
+
+\section{Related material}
+\label{sec:material}
+
+\noindent
+\begin{itemize}
+\item \href{http://www.rdatamining.com/examples/text-mining}{Text Mining}
+\item \href{http://geoffjentry.hexdump.org/twitteR.pdf}{TwitteR client for R tutorial}
+\item \href{http://davetang.org/muse/2013/04/06/using-the-r_twitter-package/}{Using the R twitteR package}
+\item \href{http://thinktostart.com/create-twitter-sentiment-word-cloud-in-r/}{Create Twitter Sentiment Word Cloud in R}
+  \item \href{http://heuristically.wordpress.com/2011/04/08/text-data-mining-twitter-r/}{Text Data Mining with Twitter and R}
+\end{itemize}
+
+
+
+\section{Session Information}
+\label{sec:sess_Information}
+
+\noindent
+The version number of R and packages loaded for generating the vignette were:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{verbatim}
+R version 3.1.1 (2014-07-10)
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+locale:
+ [1] LC_CTYPE=en_CA.UTF-8      
+ [2] LC_NUMERIC=C              
+ [3] LC_TIME=en_CA.UTF-8       
+ [4] LC_COLLATE=en_CA.UTF-8    
+ [5] LC_MONETARY=en_CA.UTF-8   
+ [6] LC_MESSAGES=en_CA.UTF-8   
+ [7] LC_PAPER=en_CA.UTF-8      
+ [8] LC_NAME=C                 
+ [9] LC_ADDRESS=C              
+[10] LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_CA.UTF-8
+[12] LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils    
+[5] datasets  methods   base     
+
+other attached packages:
+ [1] wordcloud_2.5      RColorBrewer_1.0-5
+ [3] tm_0.6             NLP_0.1-5         
+ [5] plyr_1.8.1         twitteR_1.1.8     
+ [7] dplyr_0.2          ROAuth_0.9.3      
+ [9] digest_0.6.4       RCurl_1.95-4.3    
+[11] bitops_1.0-6       knitr_1.6         
+
+loaded via a namespace (and not attached):
+ [1] assertthat_0.1  bit_1.1-12     
+ [3] bit64_0.9-4     codetools_0.2-9
+ [5] compiler_3.1.1  evaluate_0.5.5 
+ [7] formatR_1.0     highr_0.3      
+ [9] httr_0.5        magrittr_1.0.1 
+[11] parallel_3.1.1  Rcpp_0.11.2    
+[13] rjson_0.2.14    slam_0.1-32    
+[15] stringr_0.6.2   tools_3.1.1    
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+\end{linenumbers}
+\end{document}
+
+
+
+
+
+
+
+
+
+

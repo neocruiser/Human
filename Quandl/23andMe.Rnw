@@ -1,0 +1,93 @@
+\documentclass[9pt,english]{extarticle}
+\include{canevas_config}
+
+
+  
+\begin{document}
+\author{Sleiman Bassim, PhD}
+\title{R implementation}
+\maketitle
+\begin{linenumbers}
+<<setup, include=FALSE, cache=FALSE>>=
+# set global chunk options
+opts_chunk$set(dev="postscript",
+               fig.path="graphics/plot",
+               fig.lp= "",
+               comment=NA,
+               fig.keep="high",
+               fig.show='hold',
+               fig.align='center', 
+               out.width='.49\\textwidth',
+               tidy.source=TRUE,
+               crop=TRUE,
+               results="markup",
+               warnings=FALSE,
+               error=FALSE,
+               message=FALSE)
+options(formatR.arrow=TRUE,
+        width=70,
+        digits = 3,
+        scipen = 6)
+@ 
+
+\noindent
+Loaded functions:
+<<loading,echo=FALSE,results=FALSE, cache=FALSE>>=
+source("/media/Data/Dropbox/R/01funcs.R")
+#load("", .GlobalEnv)
+lsos(pat="")
+@ 
+
+\section{Load Quandl data}
+\label{sec:mydata}
+Since I am a registered use I can use an authenticated connection and can download up to 500 datasets every 24h.
+In this example I'll use the 23andMe dataset.
+Either I use the \verb|Quandl.search| function or perform a web serach \href{https://www.quandl.com/}{here}.
+<<>>=
+pkgs <- c("Quandl","dplyr", "ggplot2")
+lapply(pkgs, require, character.only = TRUE);
+
+mydata <- Quandl("TWITTER/23ANDME", trim_start="2014-07-31", trim_end="2014-10-23", authcode="V6Fm2As6sAUV1SxTfvWt")
+
+mydata.df <- tbl_df(mydata)
+mydata.df$Followers <- log(mydata.df$Followers)
+
+ggplot(mydata.df) + 
+    geom_line(aes(x = date, y = Listed),
+              stat = "identity") + 
+    labs(x = "Date in days", y = "Tweets per day") +
+    theme_bw()
+
+@ 
+
+
+\section{First rule of Fight-Club is ?}
+\label{sec:first}
+
+\Sexpr{1.578345e8} is a big number.\\
+Pi is a magical number $\pi$=\Sexpr{pi}
+<<>>=
+fit <- lm(dist ~ speed, data=cars)
+par(mar =c(4, 4, 0, 1), 
+    mgp = c(3, 1, 0), 
+    cex.axis = "1.5",
+    cex.lab = "1.5",
+    cex.main = "1.5",
+    las = 1)
+with(cars, plot(speed, dist, panel.last=abline(fit)))
+text(10, 100, "$Y=\\beta_0 + \\beta_1x + \\epsilon_0$")
+@ 
+
+\section{System Information}
+\label{sec:sys_info}
+\noindent
+The version number of R and packages loaded for generating the vignette were:
+<<sessionInfo, echo=FALSE>>=
+#save(list=ls(pattern=".*|.*"),file=".Rdata")
+sessionInfo()
+@ 
+
+
+
+\end{linenumbers}
+\end{document}

@@ -1,0 +1,192 @@
+\documentclass[9pt,english]{extarticle}
+\include{canevas_config}
+
+\title{R implementation}
+\author{Sleiman Bassim, PhD}
+
+\begin{document}
+\maketitle
+\begin{linenumbers}
+
+<<setup, include=FALSE, cache=FALSE>>=
+# set global chunk options
+opts_chunk$set(dev="postscript",
+               fig.path="graphics/plot",
+               fig.lp= "",
+               comment=NA,
+               fig.keep="high",
+               fig.show='hold',
+               fig.align='center', 
+               out.width='.49\\textwidth',
+               tidy.source=TRUE,
+               crop=TRUE,
+               results="markup",
+               warnings=FALSE,
+               error=TRUE,
+               message=FALSE)
+options(formatR.arrow=TRUE,
+        width=50,
+        digits = 3,
+        scipen = 6)
+@  
+ 
+
+\section{Explore Twitter using R}
+\label{sec:explore}
+
+
+\noindent
+Load packages for data mining of tweets. \emph{twitteR} for accessing twitter, \emph{tm} for semantic mining, and \emph{wordcloud} to visualize the results.
+<<load_libraries>>=
+library(ROAuth);
+library(dplyr);
+setwd("/media/Data/Dropbox/R/twitter")
+@ 
+
+\subsection{Update to latest version of twitteR}
+\label{subsec:twitteR}
+
+\noindent
+Install an updated version of \emph{twitteR} from github.
+\marginnote{Installation from CRAN did not result in an updated version of \emph{twitteR}. Github installs a dev version.}[1cm]
+Run all this chunk ONCE! then RESTART R session!
+<<update_twitteR>>=
+#install.packages(c("devtools","rjson","bit64","httr"));
+#library(devtools);
+#install_github("twitteR",username="geoffjentry");
+library(twitteR);
+@ 
+
+
+\subsection{Authentication settings from Twitter}
+\label{subsec:authenticate}
+
+\noindent
+From the application settings \href{https://apps.twitter.com/app/6985014/keys}{twitter} I will get the access keys to authenticate with twitter. Follow \href{http://geoffjentry.hexdump.org/twitteR.pdf}{this} tutorial under section 3 for additional settings.
+Get keys after setting an app in Twitter \textbf{hint} for a valid URL use http://test.de/ 
+<<get_keys>>=
+source("keys.R")
+setup_twitter_oauth(api_key, api_secret, access_token, access_secret)
+@ 
+
+\subsection{Testing authentication}
+\label{subsec:test_oauth}
+
+\noindent
+Getting some of the trends that are popular. But first convert to dplyr wrapper dataframe.
+<<trends>>=
+current_trends <- availableTrendLocations()
+head(current_trends)
+montreal_trends <- getTrends(3534)
+mt_df <- tbl_df(montreal_trends)
+mt_df
+@ 
+
+\subsection{Transforming data }
+\label{subsec:transformation}
+
+\noindent
+Retrieve a user current timeline
+<<retrival>>=
+keywords <- userTimeline("genomicsedu", n=100)
+@ 
+
+
+\noindent
+The list of tweets is transformed into a data frame. You can use \verb|tbl_df| to wrapp the dataframe. 
+Manipulate the text by removing generic and non relevant strings and clarifying the sentences and to keep important keywords from the tweets.
+\verb|Do.call| works fine in R but not in knitr, so run the chunk in R first, then in knitr, then load the text mining (tm) package. 
+<<transformation, cache=TRUE>>=
+require(plyr);
+ask.api <- function(hash,n){
+    a <- searchTwitter(hash, n=n)
+    b <- tbl_df(do.call("rbind.fill",lapply(a, as.data.frame)))
+}
+data.tweets <- ask.api(hash="autism",n=1000)
+dim(data.tweets)
+@ 
+
+Build a text mining wrapper function then inspect the extracted dataframe.
+<<>>=
+library(tm);
+rm.generic <- function(x,language,words){
+    a <- Corpus(VectorSource(x[,1]))
+    a <- tm_map(a, removePunctuation)
+    a <- tm_map(a, removeNumbers)
+    a <- tm_map(a, tolower)
+    b <- c(stopwords(language),words)
+#    a <- tm_map(a, removeWords, b)
+    a <- tm_map(a,PlainTextDocument)
+}
+testing <- rm.generic(data.tweets, lang='english',words="genomics")
+#inspect(testing)
+
+@ 
+
+
+\subsection{Build a document-term matrix to setup a cloud-word}
+
+\label{subsec:label}
+\label{subsec:wordcloud}
+
+\noindent
+Additional text mining can be used to find the origin of the used words and meging them together. It is called stemming. Finding the source of every word.
+First, build the document-term matrix then inspects it and the most popular words to find associated terms and their score to the related hashtag (up).
+<<>>=
+my.dt <- DocumentTermMatrix(testing)
+my.dt
+findFreqTerms(my.dt, lowfreq = 30)
+findAssocs(my.dt, 'genomics', .2)
+
+@ 
+
+Store words relatively to their frequency scores then finally use \verb|wordcloud| to plot the text mining results.
+<<>>=
+r.matrix <- as.matrix(my.dt)
+r.freq <- colSums(r.matrix)
+r.freq.df <- data.frame(term=names(r.freq), r.freq=r.freq, stringsAsFactors = FALSE)
+r.freq.df <- r.freq.df%>%arrange(desc(r.freq))
+
+library(RColorBrewer);
+pal <- brewer.pal(6, "Dark2")
+library(wordcloud);
+wordcloud(r.freq.df$term, r.freq.df$r.freq, min.freq=10,random.color=FALSE,colors=pal)
+
+@ 
+
+\section{Related material}
+\label{sec:material}
+
+\noindent
+\begin{itemize}
+\item \href{http://www.rdatamining.com/examples/text-mining}{Text Mining}
+\item \href{http://geoffjentry.hexdump.org/twitteR.pdf}{TwitteR client for R tutorial}
+\item \href{http://davetang.org/muse/2013/04/06/using-the-r_twitter-package/}{Using the R twitteR package}
+\item \href{http://thinktostart.com/create-twitter-sentiment-word-cloud-in-r/}{Create Twitter Sentiment Word Cloud in R}
+  \item \href{http://heuristically.wordpress.com/2011/04/08/text-data-mining-twitter-r/}{Text Data Mining with Twitter and R}
+\end{itemize}
+
+
+
+\section{Session Information}
+\label{sec:sess_Information}
+
+\noindent
+The version number of R and packages loaded for generating the vignette were:
+<<sessionInfo, echo=FALSE>>=
+sessionInfo()
+@ 
+
+
+\end{linenumbers}
+\end{document}
+
+
+
+
+
+
+
+
+
+
