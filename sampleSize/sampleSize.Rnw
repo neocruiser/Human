@@ -1,0 +1,208 @@
+\documentclass[9pt,english]{extarticle}
+\include{canevas_config}
+
+\begin{document}
+\author{Sleiman Bassim, PhD}
+\title{Simulation study: How many samples does it takes to find a causal SNP?}
+\maketitle
+\begin{linenumbers}
+<<setup, include=FALSE, cache=FALSE>>=
+# set global chunk options
+opts_chunk$set(dev="postscript",
+               fig.path="graphics/plot",
+               fig.lp= "",
+               comment=NA,
+               fig.keep="high",
+               fig.show='hold',
+               fig.align='center', 
+               out.width='.49\\textwidth',
+               tidy.source=TRUE,
+               crop=TRUE,
+               results="markup",
+               warnings=FALSE,
+               error=FALSE,
+               message=FALSE)
+options(formatR.arrow=TRUE,
+        width=70,
+        digits = 3,
+        scipen = 6)
+@ 
+
+\noindent
+Loaded functions:
+<<loading,results=FALSE>>=
+#source("/media/Data/Dropbox/humanR/01funcs.R")
+rm(list=ls())
+#setwd("/media/Data/Dropbox/humanR/sampleSize/")
+#setwd("~/Dropbox/humanR/sampleSize/")
+load("Simulations.Rdata", .GlobalEnv)
+#lsos(pat="")
+@ 
+
+\section{Objectives}
+\label{sec:objectives}
+The following paragraph was imported from \href{http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3198013/}{Raychaudhuri 2011}.
+
+
+\textit{For rare variant associations, the field has not yet defined accepted standards for statistical significance that account for the burden of multiple hypothesis testing. Since there are many more rare variants than common ones, and they are not typically inter-correlated with each other, a more stringent threshold may be necessary than applied for common variants. One conservative approach is to correct for the total number of bases genome-wide, ie p$=0.05/3000000000 ~ 10^{-11}$ as a significance threshold. Most recent studies have limited themselves to exomes or to a subset of targeted genes; in these instances the multiple-hypothesis testing burden might be significantly less. But with spectre of genetic studies with genome-sequencing in the very near future this conservative threshold may ultimately turn out to be appropriate.}
+
+
+\section{Data preprocessing}
+\label{sec:dataPreporcessing}
+Load packages.
+<<>>=
+pkgs <- c('xlsx','lattice','latticeExtra','ggplot2','andrews','plyr')
+lapply(pkgs, require, character.only = TRUE)
+@
+
+\subsection{Scenario I}
+\label{sec:scenario1}
+The first stage of simulations constitute an implementation of the Plink {\color{red}--simulate} verb.
+Iterations are ran in shell.
+Simulation scores are saved into R friendly formats.
+
+\begin{table}[h]
+  \centering
+  \caption{Scenarios being used for 100 iterated simulations}
+  \begin{tabular}{l l l l}
+    \toprule
+    \textbf{Scenario} & \textbf{SNP} & \textbf{Case} & \textbf{Control}\\
+    \midrule
+    I & 1000--100,000 & 1000 & 1000 \\
+   II & 1000--100,000 & 1000--100,000 & 1000--100,000 \\
+  III & 100,000 & 1000--100,000 & 1000--100,000 \\
+   IV & 100,000 & 2000--200,000 & 1000--100,000 \\
+    V & 100,000 & 1000--100,000 & 2000--200,000 \\
+   VI & 3 stages && \\
+  VII & 4 stages && Pearson 2008\\
+ VIII & pop strat && \\
+   IX & penetrance && \\
+    X & transversions && \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:scenario}
+\end{table}
+
+
+<<>>=
+sc1 <- read.table("~/Dropbox/humanR/sampleSize/data/sc1.corrected.txt", header=TRUE)
+sc1b <- read.table("~/Dropbox/humanR/sampleSize/data/sc1.uncorrected.txt", header=TRUE)
+@ 
+
+
+Adjusted \textit{P}-values are log10 transformed before being inversely plotted.
+<<>>=
+sc1$BONF <- -log10(sc1$BONF)
+sc1$FDR_BH <- -log10(sc1$FDR_BH)
+df <- data.frame(sc1, sc1b[,-c(1:6)])
+names(df)
+@
+% insert table
+
+
+\begin{table}[h]
+  \centering
+  \caption{Number of iterated SNPs and allele frequencies over 100 simulations over 1 causal SNP}
+  \begin{tabular}{r c | r r r r}
+    \toprule
+    \textbf{Nb of SNPs$^*$} & \textbf{Description} & \textbf{Freq low$^{**}$} & \textbf{Freq up$^{***}$} & \textbf{OR (Aa)} & \textbf{OR (AA/aa)} \\
+    \midrule
+    1 & rare & 0 & 1 & 2 & 4 \\
+    1000--100,000 & null & 0 & 1 & 1 & 1 \\
+    \cmidrule(r){1-2}
+    1 & rare & 0 & 1 & 1 & 2 \\
+    2000--200,000 & snpA & 0 & .05 & 1 & 1 \\
+    1000--100,000 & snpB & .05 & 0 & 1 & 1 \\
+    500--5000 & snpC & .1 & .2 & 1 & 1 \\
+    100--1000 & snpD & .2 & 1 & 1 & 1 \\
+    \bottomrule
+  \end{tabular}
+  \caption*{
+    * Number of iterated non-causal SNPs over 100 simulations and 1 causal\\
+    ** Lower allele frequency range\\
+    *** Upper allele frequency range}
+  \label{tab:frequency}
+\end{table}
+
+Counts for the number of SNPs that have been found significant after association analysis.
+<<count,fig.width=10,fig.height=6,out.width='\\linewidth'>>=
+ggplot(df, aes(x = df$BONF)) + geom_dotplot() +
+    theme_bw(base_size = 12, base_family = "") +               
+        labs(title = "Significant SNPs for 100 iterations",
+             x = "Bonferroni correction [log10(pval)]",
+             y = "SNP count x1 for each iteration")
+@ 
+
+Difference between allele frequencies for the rare variant based on the entire sample frequency by iteration.
+<<inflation,fig.width=10,fig.height=6,out.width='\\linewidth'>>=
+ggplot(df, aes(x = (df$INFLATIO), fill = factor(df$A2), y = df$BONF)) +
+  geom_dotplot(binaxis = "y", stackdir = "center", position = "dodge") +
+      theme_bw(base_size = 12, base_family = "") +               
+          labs(title = "Difference between allele significance",
+               x = "Adjusted inflation based on median chi-square",
+               y = "Bonferroni correction [log10(pval)]") +
+                   scale_fill_manual(values=c("#E69F00", "#56B4E9"), 
+                       name="Allele\nCondition",
+                       breaks=c("A", "a"),
+                       labels=c("Upper", "Lower")) +
+                           theme(legend.position = "top")
+@ 
+
+We can see how the frequency of alle A and a change over 100 iterations (x axis).
+Andrew's plot for multivariate data. 
+Plotting of the odds ratios (OR), minor frequency of first allele, and the number of simulated SNPs over 100 iterations.
+
+$f(t)=X1*sin(t)+X2*cos(t)+X3*sin(2*t)+X4*cos(2*t)+ \dots$
+
+Observations of X are the number of iterated SNPs and the columns are the OR.
+\textit{t} is a dummy variable from [0,1].
+$f(t)$ holds the \textit{i}th observation of X.
+
+<<andrew,fig.width=10,fig.height=6,out.width='\\linewidth'>>=
+df4 <- data.frame(df$OR,df$A1,df$SNPsimNb)
+andrews(df4,type=2,clr=2,ymax=2)
+@ 
+
+\subsection{Scenario II}
+\label{sec:scenario2}
+After testing the scenario I in the section \ref{sec:scenario1} it is time to increase the number of samples, ie., case-controls. 
+Following the schema described in Table \ref{tab:scenario} we increased both the number of non-causal SNPs and sample size over 100 iterative association analyses.
+Only one causal SNP was included in this simulation.
+<<>>=
+sc2 <- read.table("~/Dropbox/humanR/sampleSize/data/sc2.corrected.txt", header=TRUE)
+sc2b <- read.table("~/Dropbox/humanR/sampleSize/data/sc2.uncorrected.txt", header=TRUE)
+sc2$BONF <- -log10(sc2$BONF)
+sc2$FDR_BH <- -log10(sc2$FDR_BH)
+df <- data.frame(sc2, sc2b[,-c(1:6)])
+names(df)
+@ 
+
+Difference between Bonferroni correction and FDR Benjamini and Hochberg.
+<<bonfVSfdr,fig.width=10,fig.height=6,out.width='\\linewidth'>>=
+plot(df$BONF,df$FDR_BH,pch=4)
+@ 
+
+How many times the causal SNP has been found while increasing the number of overall SNPs.
+<<snpsimVSbonf,fig.width=10,fig.height=6,out.width='\\linewidth'>>=
+plot(df$SNPsimNb,df$BONF, pch=16)
+@ 
+
+How the odds ratios (OR) change while inceasing the sample size. Here only cases are plotted.
+<<caseVSor,fig.width=10,fig.height=6,out.width='\\linewidth'>>=
+plot(df$CASE,df$OR)
+@ 
+
+\section{System Information}
+\label{sec:sys_info}
+\noindent
+The version number of R and packages loaded for generating the vignette were:
+<<sessionInfo>>=
+#setwd("~/Dropbox/humanR/sampleSize/")
+#save(list=ls(pattern=".*|.*"),file="Simulations.Rdata")
+sessionInfo()
+@ 
+
+
+
+\end{linenumbers}
+\end{document}

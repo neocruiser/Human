@@ -1,0 +1,109 @@
+\documentclass[9pt,english]{extarticle}
+\include{canevas_config}
+
+
+  
+\begin{document}
+\author{Sleiman Bassim, PhD}
+\title{R implementation}
+\maketitle
+\begin{linenumbers}
+<<setup, include=FALSE, cache=FALSE>>=
+# set global chunk options
+opts_chunk$set(dev="postscript",
+               fig.path="graphics/plot",
+               fig.lp= "",
+               comment=NA,
+               fig.keep="high",
+               fig.show='hold',
+               fig.align='center', 
+               out.width='.49\\textwidth',
+               tidy.source=TRUE,
+               crop=TRUE,
+               results="markup",
+               warnings=FALSE,
+               error=FALSE,
+               message=FALSE)
+options(formatR.arrow=TRUE,
+        width=70,
+        digits = 3,
+        scipen = 6)
+@ 
+
+\noindent
+Loaded functions:
+<<loading,echo=FALSE,results=FALSE, cache=FALSE>>=
+#source("/media/Data/Dropbox/R/01funcs.R")
+#load("", .GlobalEnv)
+#lsos(pat="")
+@ 
+
+\section{Simulated some correlated data}
+\label{sec:correlated}
+First start with a linear correlated dataset.
+<<>>=
+variable = 1
+@ 
+
+Set the random number generator then simulated \textbf{3} random variables.
+<<>>=
+set.seed(10)
+y<-c(1:1000)
+x1<-c(1:1000)*runif(1000,min=0,max=2)
+x2<-(c(1:1000)*runif(1000,min=0,max=2))^variable
+x3<-log(c(1:1000)*runif(1000,min=0,max=2))
+
+@ 
+
+Finally, regress and check for correlation with \textit{R²}.
+<<>>=
+lm_fit<-lm(y~x1+x2+x3)
+summary(lm_fit)$r.squared
+
+@
+
+\section{Simulate less correlated data}
+\label{sec:lesscorr}
+Repeat the above step by adding polynomial effect to the data.
+<<>>=
+variable = 2
+@ 
+
+Now simulate a less correlated data. You can see that the \textit{R²} is now
+lower than the one above. Meaning, less correlation between variables.
+<<>>=
+set.seed(10)
+y<-c(1:1000)
+x1<-c(1:1000)*runif(1000,min=0,max=2)
+x2<-(c(1:1000)*runif(1000,min=0,max=2))^variable
+x3<-log(c(1:1000)*runif(1000,min=0,max=2))
+lm_fit<-lm(y~x1+x2+x3)
+summary(lm_fit)$r.squared
+@ 
+
+Lets reduce the correlation even more by adding a cubic polynomial.
+<<>>=
+variable = 3
+set.seed(10)
+y<-c(1:1000)
+x1<-c(1:1000)*runif(1000,min=0,max=2)
+x2<-(c(1:1000)*runif(1000,min=0,max=2))^variable
+x3<-log(c(1:1000)*runif(1000,min=0,max=2))
+lm_fit<-lm(y~x1+x2+x3)
+summary(lm_fit)$r.squared
+@ 
+
+\newpage
+\section{System Information}
+\label{sec:sys_info}
+\noindent
+The version number of R and packages loaded for generating the vignette were:
+<<sessionInfo, echo=FALSE>>=
+#save(list=ls(pattern=".*|.*"),file=".Rdata")
+sessionInfo()
+@ 
+
+
+
+\end{linenumbers}
+\end{document}

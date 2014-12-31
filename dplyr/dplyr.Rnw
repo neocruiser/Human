@@ -40,7 +40,9 @@ lsos(pat="")
 \section{By-group aggregation}
 \label{sec:aggregation}
 
-By-group aggregation uses the principle of split-and-conquer or \textbf{split-apply-combine} a term coined by \href{http://goo.gl/qZIQ8I}{Hadley Wickham}. R jobs will run in parallel across several cores which reduces the calculation time of the row search.
+By-group aggregation uses the principle of split-and-conquer or \textbf{split-apply-combine} a term coined by \href{http://goo.gl/qZIQ8I}{Hadley Wickham}. R jobs will run in parallel across several cores which reduces the calculation time of the row search. 
+
+
 <<packages,results=FALSE>>=
 
 pkgs <- c('rbenchmark', 'doParallel', 'foreach', 'Hmisc', 'dplyr', 'plyr')

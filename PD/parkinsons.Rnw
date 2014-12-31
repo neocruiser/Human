@@ -1,0 +1,415 @@
+\documentclass[9pt,english]{extarticle}
+\include{canevas_config}
+
+\begin{document}
+\author{Sleiman Bassim, PhD}
+\title{R implementation: Predict risk of Parkinson's disease based on clinical measurements}
+\maketitle
+\begin{linenumbers}
+<<setup, include=FALSE, cache=FALSE>>=
+# set global chunk options
+opts_chunk$set(dev="postscript",
+               fig.path="graphics/plot",
+               fig.lp= "",
+               comment=NA,
+               fig.keep="high",
+               fig.show='hold',
+               fig.align='center', 
+               out.width='.49\\textwidth',
+               tidy.source=TRUE,
+               crop=TRUE,
+               results="markup",
+               warnings=FALSE,
+               error=FALSE,
+               message=FALSE)
+options(formatR.arrow=TRUE,
+        width=70,
+        digits = 3,
+        scipen = 6)
+@ 
+
+\noindent
+Loaded functions:
+<<loading,results=FALSE>>=
+#source("/media/Data/Dropbox/humanR/01funcs.R")
+rm(list=ls())
+#setwd("/media/Data/Dropbox/humanR/PD/")
+#setwd("~/Dropbox/humanR/PD/")
+load("PD.Rdata", .GlobalEnv)
+#lsos(pat="")
+@ 
+
+\section{Data preprocessing}
+\label{sec:dataPreporcessing}
+Load packages.
+<<>>=
+pkgs <- c('xlsx','caret','leaps','glmnet','lattice','latticeExtra')
+lapply(pkgs, require, character.only = TRUE)
+@
+
+Read in the data. Clean some columns and create a sample testing set.
+<<>>=
+# read in the data
+#raw.df <- read.xlsx("~/Dropbox/humanR/PD/Phenotypes.xlsx", sheetIndex = "Phenotypes")
+#colnames(raw.df) <- paste("Ph", seq(1, ncol(raw.df)), sep="")
+raw.df <- raw.df[-1,-c(1,97,98)]
+dim(raw.df)
+# change the column name
+# random sampling
+sample.first <- sample(1:dim(raw.df)[1], 100)
+@ 
+\marginnote{\small\color{blue}$\Lsh$
+Description of column names can be found \href{http://1drv.ms/16arXg7}{here}.}[-2cm]
+
+
+Remove NAs. And if not, look for how many samples have complete records of
+clinical measurements. When all NAs are removed only 1 sample remains. So how to
+account for missing data? Either by removing missing data, imputation or through
+reduced-feature models
+\href{http://jmlr.org/papers/volume8/saar-tsechansky07a/saar-tsechansky07a.pdf}{Saar
+2007}
+\marginnote{\small\color{blue}$\Lsh$ Choose which dataset to work with: the wole 
+raw dataset or a subset of it (for fast computations)}[4.5cm]
+<<>>=
+# if I remove all NAs how many samples remain?
+raw.df.na <- raw.df[complete.cases(raw.df), ]
+dim(raw.df.na)
+# sample the data for faster testing
+df.sample <- raw.df[sample.first, ]
+NN <- raw.df # df.sample or raw.df
+@ 
+\marginnote{\small\color{red}$\Lsh$ Change the number of samples. Choose from a small subset or the whole dataset}[-1cm]
+
+<<>>=
+# count the number of NAs per column
+Countcolnas <- function(df){
+    m <- apply(is.na(df), 2, function(x) {
+        y=mean(x)
+        floor(y*100)})
+table(m)
+}
+# number of NAs per column
+plot(Countcolnas(NN), 
+     xlab = "Percentages of missing data (NA)", 
+     ylab= "Number of columns with % NAs", 
+     main = "Additive number of columns with NAs")
+@ 
+\marginnote{\small\color{blue}$\Lsh$ First row is the percentage of NAs.
+Second row is the number of columns with that percentage.
+}[-6cm]
+
+
+Every column of the dataset contain missing information. Select the columns that
+contain below 5\% missing data, remove the remaining.
+<<>>=
+# extract the names of the columns with 0% NAs
+Extcolnames <- function(df, p){
+    m <- apply(is.na(df), 2, function(x){
+        y = mean(x)
+        floor(y*100)})
+    names(df[m < p])
+}
+p = 20
+names.non.na <- Extcolnames(NN,p)
+# extract 0% non NA subset
+non.na.df <- NN[, names.non.na]
+dim(non.na.df)
+@ 
+\marginnote{\small\color{blue}$\Lsh$ When using the random subset, more columns
+  are chosen. In the raw dataset only 27 columns are below 5\%}[-1cm]
+
+What is the maximum number of missing data for a \textit{p} threshold of
+Sexp{nrow(non.na.df)} rows. Then again, is the missing data random or not.
+<<>>=
+floor(nrow(non.na.df) * (p*.01))
+# if all NAs are removed
+clean.df <- non.na.df[complete.cases(non.na.df),]
+dim(clean.df)
+# then I'll be removing
+dim(non.na.df)[1] - dim(clean.df)[1]
+@ 
+\marginnote{\small\color{blue}$\Lsh$ 222 NAs might not be missing at random.}[-1cm]
+
+
+\subsection{Create dummy variables}
+\label{subsec:dummyVariables}
+Preprocessing of the data to remove factors from the dataframe and convert them to numeric, remove near-zero variables, and correlated predictors. Then create \textit{K} binary features for each
+categorical attribute. \textit{K} is the number of levels for each attribute. 
+More thoughts should be put into considering other dummy coding. A nice explication can be found \href{http://www.psychstat.missouristate.edu/multibook/mlt08m.html}{here}.
+<<>>=
+head(clean.df)
+numericals <- c(1:8,11:19,24:26) # for 20% NAs
+#numericals <- c(1:8,11:21) # for 0% NAs
+clean.df[, numericals] <- sapply(clean.df[, numericals], as.numeric)
+dim(clean.df)
+summary(clean.df[, -numericals])
+dummy.df <- dummyVars(Ph2~., data = clean.df)
+# number of dummy columns
+clean.df.dummy <- predict(dummy.df, newdata = clean.df)
+dim(clean.df.dummy)
+@ 
+
+\subsection{Prepare discovery and replication sets}
+\label{subsec:predictionAccuracy}
+How many zero- and near-zero variant variables. The frequency ratio and the percent of unique variables are both used to decide which predictors to remove.
+First, a certain threshold is pre-selected. Values that falls outside of it are discarded.
+<<>>=
+y <- clean.df$Ph2
+# before removing near-zero values
+dim(clean.df.dummy)[2]
+clean.df.dummy2 <- data.frame(clean.df.dummy, y = y)
+nzp <- nearZeroVar(clean.df.dummy2, freqCut=99/1, 
+                   uniqueCut=10, 
+                   saveMetrics=FALSE)
+clean.df.dummy <- clean.df.dummy2[, -nzp]
+# after removing near-zero values
+dim(clean.df.dummy)[2]
+@ 
+
+Identifying multi-collinearity.
+<<>>=
+Rm.collinearity <- function(d, cutoff){
+    vrange <- range(apply(d, 2, var))
+    corx <- cor(d)
+    s1 <- summary(corx[upper.tri(corx)])
+    num <- sum(abs(corx[upper.tri(corx)]) > cutoff)
+    ncor <- findCorrelation(corx, cutoff = cutoff)
+    corx <- cor(d[, -ncor])
+    s2 <- summary(corx[upper.tri(corx)])
+    le <- levelplot(cor(d),
+                    aspect = "iso",
+                    scales = list(x = list(rot = 90)),
+                    colorkey = TRUE)  
+    listing = list(Correlation_Plot=le, 
+         Varriation_Range = vrange,
+         Nb_of_variables_at_selected_cutoff = num,
+         Correlation_Range_old = s1,
+         Correlation_Range_new = s2,
+         List_of_correlated_variables = ncor,
+         New_non_collinear_matrix = d[, -ncor])
+}
+remaining <- Rm.collinearity(clean.df.dummy,.8)
+remaining[[1]]
+@ 
+
+After removing collinear variables at a cutoff of .8/1.
+<<>>=
+unlist(remaining[2:5])
+levelplot(cor(remaining[[7]]),aspect = "iso",
+                    scales = list(x = list(rot = 90)),
+                    colorkey = TRUE)
+@ 
+
+Split the data into training and testing datasets.
+<<>>=
+# the treatment outcome
+trainList <- sample(1:nrow(clean.df.dummy), .7*dim(clean.df.dummy)[1])
+training <- clean.df.dummy[trainList,]
+dim(training)
+#testing <- clean.df.dummy[-trainList,-dim(clean.df.dummy)[2]]
+testing <- clean.df.dummy[-trainList,]
+dim(testing)
+@ 
+
+
+\section{Ranking of phenotypes}
+\label{sec:bestSubset}
+Best subset selection performs a ranking of variables (attributes) according to their R$^2$.
+<<>>=
+training.m <- as.matrix(training)
+testing.m <- as.matrix(testing)
+# fit a model on training set
+set.seed(1234)
+grid <- 10^seq(10,-2,length=100)
+ridge.phenotypes <- glmnet(training.m[,-dim(training.m)[2]], 
+                           training.m[,dim(training.m)[2]], 
+                           alpha = 0, 
+                           lambda = grid, 
+                           family="gaussian")
+plot(ridge.phenotypes, xvar="lambda", label=TRUE)
+# get the best lambda using CV
+cv.out <- cv.glmnet(training.m[,-dim(training.m)[2]],
+                    training.m[,dim(training.m)[2]], 
+                    alpha=0, 
+                    family="gaussian",
+                    nfolds=20)
+plot(cv.out)
+@ 
+
+Predict using the testing set and the model with best lambda
+<<>>=
+bestlam <- cv.out$lambda.min;bestlam
+pred.phenotypes <- predict(ridge.phenotypes,
+                           bestlam,
+                           newx=testing.m[,-dim(training.m)[2]],
+                           type="response")
+mean((pred.phenotypes - testing.m[,dim(training.m)[2]])^2)
+# predict on the whole dataset using the best lambda
+ev.mat <- as.matrix(clean.df.dummy)
+ev.reg <- glmnet(ev.mat[,-dim(training.m)[2]],
+                 ev.mat[,dim(training.m)[2]],
+                 alpha=0,
+                 family="gaussian")
+ev.pred <- predict(ev.reg, s=bestlam,type="coefficients")
+@ 
+
+Prepare data for plotting all these steps are required because the predict function creates an S4 object.
+<<>>=
+ranking <- as.matrix(ev.pred)
+df <- data.frame(phenotypes=rownames(ranking), coef=ranking[,1])
+df <- df[-1,]
+df <- df[! df$coef == 0,]
+df <- df[order(df[,2], decreasing=FALSE),]
+# plot
+#setEPS()
+#postscript("ranking7.eps")
+stripplot(factor(df$phenotypes,
+                 levels=df$phenotypes,
+                 order=T) ~ df$coef, 
+          df,scales=list(cex=0.7))
+#dev.off()
+@ 
+
+Extract the top ranking predictors after root square to remove negative values and to group the predictors by their highest impact coefficients. 
+Higher impact predictors are the one with the biggest coefficient with a negative or positive sign.
+<<>>=
+Remove.low.coef <- function(dfx, p){
+    # p must be from 1 to 100
+    # dfx must contain first col of names
+    # and second col as coefficients
+    dfx[, 2] <- (df[, 2]*100)^2
+    dfb <- dfx[ !dfx[,2] < p, ]
+    dfb[, 1]
+}
+px = 20
+sp <- Remove.low.coef(df,px)
+@ 
+
+Plot phenotypes by their importance score after logarithmic transformation of the square of their coefficients.
+<<>>=
+Importance.pheno <- function(dfx, p){
+    # p must be from 1 to 100
+    # dfx must contain first col of names
+    # and second col as coefficients
+    dfx[, 2] <- (df[, 2]*100)^2
+    dfb <- dfx[ !dfx[,2] < p, ]
+    dfb[, 2] <- log((dfb[, 2]))
+    dfb[, 1:2]
+    dfb[order(dfb[, 2], decreasing=FALSE), ]
+}
+imp <- Importance.pheno(df,px)
+stripplot(factor(imp$phenotypes,
+                 levels=imp$phenotypes,
+                 order=T) ~ imp$coef, 
+          imp,scales=list(cex=0.7),
+          xlab = "Importance score",
+          ylab = "Phenotypes",
+          pch = 16, cex= 1.5)
+
+@ 
+
+\section{Testing for prediction accuracy}
+\label{sec:predAccuracy}
+Write a function that sets the seed (randomly) for reproducibility, takes a
+model name and the hyperparameters in a list. This function runs 10-folds cross
+validation (CV) resampling and repeats it 10 times. There is a preprocessing step for
+centring and scaling numerical data. This function is for regression purposes.
+No categorical data allowed. It produces a Plot for RMSE estimation as function
+of the tuned (with CV) hyperparameters.
+
+<<fig.width=10,fig.height=6,out.width='\\linewidth'>>=
+Train.model <- function(seeds, model, var, training, testing){
+    # The outcome should be numerical
+    # under a column "y"
+    # the subset for training is called training
+    set.seed(seeds)
+    options(warn=-1) # stop warnings from going to stdout
+    lapsed <- system.time(
+    # training the model
+    trained <- train(y~.,
+      data=training,
+			method = model,
+			trControl=trainControl(method="repeatedcv",	
+          number=10, repeats=10),
+			tuneGrid=expand.grid(var),
+			preProc=c("center","scale"),
+			tuneLength=5))
+    # testing the model
+    tested <- predict(trained, newdata=testing)
+    rmse <- sqrt((sum((testing$y-tested)^2))/nrow(testing))
+    # ploting the RMSE
+    # plotting R2
+#    setEPS()
+#    postscript(paste("R2",rmse,sep="_",".eps"))
+    plot(var[[1]],trained$results$Rsquared, 
+         ylab="Computed Rsquared",
+         xlab=c(model," parameter"), 
+         pch=16, type="b",
+         main=list(c("R2 with parameter tuning"),
+                   cex = .7))
+    # plotting the computational time
+    plot(lapsed[[3]],rmse, 
+         main=list(c("Elapsed timexMinimum RMSE for", 
+             length(var[[1]]),"base parameters"),
+                   cex = .7),
+         xlab=list(c("Time (s) for Dsc:",
+             nrow(training),"and Rep:",
+             nrow(testing),"samples")),
+         ylab="RMSE")
+    # plotting the minimum RMSE
+    Sys.sleep(1) # wait for snapshot
+    plot(trained, type=c("b"), pch=16, 
+         main="Error estimation with parameter tuning")
+}
+
+@ 
+
+Restructuring the data, so they are read by the custom function.
+<<>>=
+y <- training[, dim(training)[2]]
+training <- data.frame(training[, sp],y=y)
+y <- testing[, dim(testing)[2]]
+testing <- data.frame(testing[, sp],y=y)
+@ 
+
+\subsection{Random Forest}
+\label{subsec:rf}
+Lets try building a decision tree with a random forest model because the correlation between variables might just be linear after all.
+%% <<>>=
+%% Train.model(123, model="rf", var=list(mtry=(1:4)), 
+%%             training,testing)
+%% @ 
+
+
+\subsection{Support Vector Machines}
+\label{subsec:svm}
+Support vector machine with a radial basis function kernel. Testing for prediction accuracy on non labelled data.
+<<>>=
+#Train.model(123,model="svmRadial",var=list(C=(1:3)/10,sigma=(1:3)/10),training,testing)
+@ 
+
+Lets try a linear svm because the correlation between variables might just be
+linear after all. In a sense where missing data are non-randomly missing.
+Testing for prediction accuracy on non labelled data. 
+<<>>=
+#Train.model(123,model="svmLinear",
+#            var=list(C=seq(.1,2,.5)),training,testing)
+@  
+
+
+
+
+
+\section{System Information}
+\label{sec:sys_info}
+\noindent
+The version number of R and packages loaded for generating the vignette were:
+<<sessionInfo>>=
+###save(list=ls(pattern=".*|.*"),file="PD.Rdata")
+sessionInfo()
+@ 
+
+
+
+\end{linenumbers}
+\end{document}

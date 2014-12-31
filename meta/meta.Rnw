@@ -1,0 +1,99 @@
+\documentclass[9pt,english]{extarticle}
+\include{canevas_config}
+
+
+  
+\begin{document}
+\author{Sleiman Bassim, PhD}
+\title{R implementation}
+\maketitle
+\begin{linenumbers}
+<<setup, include=FALSE, cache=FALSE>>=
+# set global chunk options
+opts_chunk$set(dev="postscript",
+               fig.path="graphics/plot",
+               fig.lp= "",
+               comment=NA,
+               fig.keep="high",
+               fig.show='hold',
+               fig.align='center', 
+               out.width='.49\\textwidth',
+               tidy.source=TRUE,
+               crop=TRUE,
+               results="markup",
+               warnings=FALSE,
+               error=FALSE,
+               message=FALSE)
+options(formatR.arrow=TRUE,
+        width=70,
+        digits = 3,
+        scipen = 6)
+@ 
+
+\noindent
+Loaded functions:
+<<loading,echo=FALSE,results=FALSE, cache=FALSE>>=
+source("/media/Data/Dropbox/humanR/01funcs.R")
+#load("", .GlobalEnv)
+lsos(pat="")
+@ 
+
+\section{Loading}
+\label{sec:loading}
+Load packages.
+<<>>=
+pkgs <- c('xlsx', 'caret', 'meta')
+lapply(pkgs, require, character.only = TRUE);
+@
+
+\section{Simulating data}
+\label{sec:simulatingData}
+Create a function that uses a binomial distribution to draw samples from a
+theoretical population. The assign correlation between two variables. The first
+is to replace the genotype data. The second represents the phenotype outcome
+that can distinguish between case-control samples. This function simulates
+\textbf{only} the \textbf{correlation} in GWAS data.
+\marginnote{\small\color{blue}$\Lsh$ Plink can simulate genotype data.}[0cm]
+<<>>=
+set.seed(123)
+sim.meta <- function(studies, samples, p){
+    # simulate data based on a binomial distribution
+    # binary data are accepted for the outcome (blue red)
+    # Only two variables are accepted for fixed effect model
+    n.studies <- studies
+    n.cases <- rbinom(n = n.studies, size = samples, prob = p)
+    n.controls <- rbinom(n = n.studies, size = samples, prob = p)
+    # causal SNPs constitues 10% and normals 50%   
+    n.causal <- rbinom(n = n.studies, size = n.cases, 
+                       prob = rep(.5, length(n.cases)))
+    n.normal <- rbinom(n = n.studies, size = n.controls, 
+                       prob = rep(.1, length(n.controls)))
+    meta.analysis <- metabin(event.e = n.causal, n.e = n.cases, 
+                             event.c = n.normal, n.c = n.controls, 
+                             method = "MH", sm = "OR")
+forest(meta.analysis)
+}
+
+@ 
+Start simulating 10 studies with 200 samples each. There is two
+outcomes for the responders of each study (addict or not addict). Probability
+\textbf{p} is the case-control ratio. But it also controls the number of causal
+SNPs in the case samples. In this simulation causal SNPs account for 10 \% of
+the effect size.
+<<fig.width=10,fig.height=6,out.width='\\linewidth'>>=
+sim.meta(10, 1000, .5)
+@ 
+
+\section{System Information}
+\label{sec:sys_info}
+\noindent
+The version number of R and packages loaded for generating the vignette were:
+<<sessionInfo, echo=FALSE>>=
+#save(list=ls(pattern=".*|.*"),file=".Rdata")
+sessionInfo()
+@ 
+
+
+
+\end{linenumbers}
+\end{document}
