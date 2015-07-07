@@ -109,7 +109,7 @@ Extcolnames <- function(df, p){
         floor(y*100)})
     names(df[m < p])
 }
-p = 20
+p = .1
 names.non.na <- Extcolnames(NN,p)
 # extract 0% non NA subset
 non.na.df <- NN[, names.non.na]

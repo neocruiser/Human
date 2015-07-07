@@ -62,38 +62,53 @@ Locally loaded functions:
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlkwd{source}\hlstd{(}\hlstr{"/media/Data/Dropbox/R/01funcs.R"}\hlstd{)}
+\hlkwd{source}\hlstd{(}\hlstr{"~/data/Dropbox/humanR/01funcs.R"}\hlstd{)}
 \hlcom{#load("", .GlobalEnv)}
 \hlkwd{lsos}\hlstd{(}\hlkwc{pat}\hlstd{=}\hlstr{""}\hlstd{)}
 \end{alltt}
 \begin{verbatim}
-                       Type   Size PrettySize Rows Columns
-bagging            function  23520      23 Kb   NA      NA
-bagging.clas       function  24280    23.7 Kb   NA      NA
-baggingTune        function  23856    23.3 Kb   NA      NA
-circos.test        function  55408    54.1 Kb   NA      NA
-Cols               function   6576     6.4 Kb   NA      NA
-ensemble.mean      function  24232    23.7 Kb   NA      NA
-locusRMR           function  11224      11 Kb   NA      NA
-model.clas         function  20680    20.2 Kb   NA      NA
-model.reg          function  18528    18.1 Kb   NA      NA
-modelTune.clas     function  21016    20.5 Kb   NA      NA
-modelTune.reg      function  18864    18.4 Kb   NA      NA
-net2Bin            function  33240    32.5 Kb   NA      NA
-normDataWithin     function  21816    21.3 Kb   NA      NA
-olBarplot          function  31992    31.2 Kb   NA      NA
-overLapper         function  86584    84.6 Kb   NA      NA
-predict.regsubsets function  10208      10 Kb   NA      NA
-range_correlation  function  16472    16.1 Kb   NA      NA
-regfit             function   9912     9.7 Kb   NA      NA
-regfit.int         function  10360    10.1 Kb   NA      NA
-rocplot            function   7768     7.6 Kb   NA      NA
-set.cor            function  10712    10.5 Kb   NA      NA
-set.var            function  12216    11.9 Kb   NA      NA
-summarySE          function  30400    29.7 Kb   NA      NA
-summarySEwithin    function  39616    38.7 Kb   NA      NA
-vennPlot           function 562632   549.4 Kb   NA      NA
-visualizeNet       function  30288    29.6 Kb   NA      NA
+                         Type    Size PrettySize  Rows Columns
+a.df                   tbl_df    6848     6.7 Kb    42       2
+a.list                   list    6144       6 Kb     2      NA
+bagging              function   23520      23 Kb    NA      NA
+bagging.clas         function   24280    23.7 Kb    NA      NA
+baggingTune          function   23856    23.3 Kb    NA      NA
+circos.test          function   55408    54.1 Kb    NA      NA
+Cols                 function    6576     6.4 Kb    NA      NA
+ensemble.mean        function   24232    23.7 Kb    NA      NA
+i                     integer      48   48 bytes     1      NA
+indices.df            integer    4040     3.9 Kb  1000      NA
+input.df           data.frame 2432000     2.3 Mb 10027      20
+input.subset.df        tbl_df 1497248     1.4 Mb  1000      20
+input.summary        function   12808    12.5 Kb    NA      NA
+locusRMR             function   11224      11 Kb    NA      NA
+model.clas           function   20680    20.2 Kb    NA      NA
+model.reg            function   18528    18.1 Kb    NA      NA
+modelTune.clas       function   21016    20.5 Kb    NA      NA
+modelTune.reg        function   18864    18.4 Kb    NA      NA
+net2Bin              function   33240    32.5 Kb    NA      NA
+normDataWithin       function   21816    21.3 Kb    NA      NA
+olBarplot            function   31992    31.2 Kb    NA      NA
+output.df          data.frame    3568     3.5 Kb    46       3
+output.df.log      data.frame    7304     7.1 Kb    29       3
+output.df.reshape     cast_df   15944    15.6 Kb    21       3
+output.df.stand        matrix     640  640 bytes    29       1
+output.df.variants data.frame    7208       7 Kb    29       3
+overLapper           function   86584    84.6 Kb    NA      NA
+pkgs                character     392  392 bytes     6      NA
+predict.regsubsets   function   10208      10 Kb    NA      NA
+range_correlation    function   16472    16.1 Kb    NA      NA
+regfit               function    9912     9.7 Kb    NA      NA
+regfit.int           function   10360    10.1 Kb    NA      NA
+rocplot              function    7768     7.6 Kb    NA      NA
+set.cor              function   10712    10.5 Kb    NA      NA
+set.var              function   12216    11.9 Kb    NA      NA
+summarySE            function   30400    29.7 Kb    NA      NA
+summarySEwithin      function   39616    38.7 Kb    NA      NA
+testing                  list 2882440     2.7 Mb     2      NA
+top100                 tbl_df   70032    68.4 Kb   103      12
+vennPlot             function  562632   549.4 Kb    NA      NA
+visualizeNet         function   30288    29.6 Kb    NA      NA
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -101,7 +116,9 @@ visualizeNet       function  30288    29.6 Kb   NA      NA
 \section{By-group aggregation}
 \label{sec:aggregation}
 
-By-group aggregation uses the principle of split-and-conquer or \textbf{split-apply-combine} a term coined by \href{http://goo.gl/qZIQ8I}{Hadley Wickham}. R jobs will run in parallel across several cores which reduces the calculation time of the row search.
+By-group aggregation uses the principle of split-and-conquer or \textbf{split-apply-combine} a term coined by \href{http://goo.gl/qZIQ8I}{Hadley Wickham}. R jobs will run in parallel across several cores which reduces the calculation time of the row search. 
+
+
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
@@ -138,8 +155,10 @@ Get data from this site \href{http://goo.gl/nB0gAH}{here}. It is in *.xlsx form.
 \hlkwd{lsos}\hlstd{(}\hlkwc{pattern}\hlstd{=}\hlstr{"input.*"}\hlstd{)}
 \end{alltt}
 \begin{verbatim}
-               Type    Size PrettySize  Rows Columns
-input.df data.frame 2432000     2.3 Mb 10027      20
+                      Type    Size PrettySize  Rows Columns
+input.df        data.frame 2432000     2.3 Mb 10027      20
+input.subset.df     tbl_df 1497248     1.4 Mb  1000      20
+input.summary     function   12808    12.5 Kb    NA      NA
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -156,39 +175,40 @@ Sampling 1000 rows from the dataset is followed with a grouping and summarizing 
 \end{alltt}
 \begin{verbatim}
 Classes 'tbl_df', 'tbl' and 'data.frame':	1000 obs. of  20 variables:
- $ chr             : Factor w/ 23 levels "1","10","11",..: 3 4 12 2 13 1 18 22 12 15 ...
- $ pos             : num  67395456 51723598 209204280 95097599 3838285 ...
- $ rsID            : Factor w/ 5383 levels ".","rs10009430",..: 481 1 1 889 1 1 1145 1 1 4247 ...
- $ ref_allele      : Factor w/ 145 levels "A","AAACC","AAC",..: 1 1 75 1 33 33 33 75 17 33 ...
- $ alt_allele      : Factor w/ 89 levels "A","AAC","AAG",..: 65 9 1 20 65 65 65 1 1 1 ...
- $ ancestral_allele: Factor w/ 125 levels "-",".","A","a",..: 3 3 67 3 29 29 29 67 16 30 ...
- $ effect          : Factor w/ 2 levels "full","partial": 2 1 2 2 2 2 2 1 1 2 ...
- $ type            : Factor w/ 3 levels "frameshift_indel",..: 3 1 2 3 3 3 2 3 1 3 ...
+ $ chr             : Factor w/ 23 levels "1","10","11",..: 2 8 11 13 21 12 17 1 16 1 ...
+ $ pos             : num  101180550 48177825 53116811 20033367 145139945 ...
+ $ rsID            : Factor w/ 5383 levels ".","rs10009430",..: 1541 1 2426 5056 3447 2223 1 4182 4576 1 ...
+ $ ref_allele      : Factor w/ 145 levels "A","AAACC","AAC",..: 107 107 33 33 33 107 107 1 75 68 ...
+ $ alt_allele      : Factor w/ 89 levels "A","AAC","AAG",..: 20 1 65 40 65 1 1 40 65 20 ...
+ $ ancestral_allele: Factor w/ 125 levels "-",".","A","a",..: 94 94 93 29 29 94 94 3 67 61 ...
+ $ effect          : Factor w/ 2 levels "full","partial": 2 1 1 2 1 1 2 2 1 1 ...
+ $ type            : Factor w/ 3 levels "frameshift_indel",..: 2 3 3 2 2 3 2 2 3 1 ...
  $ an              : num  2184 2184 2184 2184 2184 ...
- $ ac              : num  56 327 1 4 1 2 2 1 15 3 ...
- $ gene            : Factor w/ 6433 levels "A1BG","A2M","A2ML1",..: 3914 1462 4342 3722 3444 2317 5211 2325 3580 605 ...
- $ gene_id         : Factor w/ 6433 levels "ENSG00000000419.7",..: 3963 2530 1423 2449 616 3511 5115 5072 1738 796 ...
- $ lof_trans       : num  1 1 1 4 3 1 1 1 1 2 ...
- $ all_trans       : num  2 1 5 7 4 2 3 1 1 7 ...
- $ failed_filters  : num  0 0 0 0 0 0 0 0 0 0 ...
- $ filters_failed  : Factor w/ 69 levels "0","all_alt",..: 1 1 1 1 1 1 1 1 1 1 ...
- $ splice_type     : Factor w/ 3 levels ".","acceptor",..: 1 1 3 1 1 1 3 1 1 1 ...
- $ canonical       : Factor w/ 3 levels ".","NO","YES": 1 1 3 1 1 1 3 1 1 1 ...
- $ other_canonical : Factor w/ 3 levels ".","NO","YES": 1 1 3 1 1 1 3 1 1 1 ...
- $ intron_length   : Factor w/ 2266 levels ".","1","100",..: 1 1 1523 1 1 1 1910 1 1 1 ...
+ $ ac              : num  1 1 49 561 1 2 1 1 1 67 ...
+ $ gene            : Factor w/ 6433 levels "A1BG","A2M","A2ML1",..: 2597 33 6404 1698 2603 4750 797 1013 1088 1900 ...
+ $ gene_id         : Factor w/ 6433 levels "ENSG00000000419.7",..: 1616 2596 3959 860 5563 213 5310 2678 5062 3623 ...
+ $ lof_trans       : num  1 4 7 1 2 3 2 1 1 3 ...
+ $ all_trans       : num  3 4 7 3 2 3 3 3 1 3 ...
+ $ failed_filters  : num  1 0 0 1 1 0 0 0 0 0 ...
+ $ filters_failed  : Factor w/ 69 levels "0","all_alt",..: 46 1 1 65 46 1 1 1 1 1 ...
+ $ splice_type     : Factor w/ 3 levels ".","acceptor",..: 3 1 1 2 2 1 2 3 1 1 ...
+ $ canonical       : Factor w/ 3 levels ".","NO","YES": 2 1 1 3 2 1 3 3 1 1 ...
+ $ other_canonical : Factor w/ 3 levels ".","NO","YES": 2 1 1 3 2 1 3 3 1 1 ...
+ $ intron_length   : Factor w/ 2266 levels ".","1","100",..: 344 1 1 1177 523 1 2002 2006 1 1 ...
 \end{verbatim}
 \begin{alltt}
 \hlkwd{unique}\hlstd{(input.subset.df}\hlopt{$}\hlstd{effect)}
 \end{alltt}
 \begin{verbatim}
-[1] partial full   
+[1] partial full    <NA>   
 Levels: full partial
 \end{verbatim}
 \begin{alltt}
 \hlkwd{unique}\hlstd{(input.subset.df}\hlopt{$}\hlstd{chr)}
 \end{alltt}
 \begin{verbatim}
- [1] 11 12 2  10 20 1  5  9  22 17 X  7  18 8  16 14 13 19 3  15 6  4  21
+ [1] 10   16   19   20   8    2    4    1    3    22   5    14   12   6    9    11  
+[17] 7    15   18   13   21   17   X    <NA>
 Levels: 1 10 11 12 13 14 15 16 17 18 19 2 20 21 22 3 4 5 6 7 8 9 X
 \end{verbatim}
 \end{kframe}
@@ -212,20 +232,20 @@ Extract subsets of the dataframe depending on the "effect" column.
 \end{alltt}
 \begin{verbatim}
 [[1]]
-Source: local data frame [451 x 20]
+Source: local data frame [463 x 20]
 
-     chr       pos        rsID ref_allele alt_allele ancestral_allele  effect
-5721  11  67395456 rs118032721          A          T                A partial
-1538   2 209204280           .          G          A                G partial
-5155  10  95097599 rs140386623          A          C                A partial
-9330  20   3838285           .          C          T                C partial
-887    1 212798487           .          C          T                C partial
-3031   5 150711989 rs142258981          C          T                C partial
-9760  22  36595608 rs192225524          C          A                c partial
-8165  17  61988546 rs139915511          C          T                c partial
-124    1  19810813           .          C         CT                C partial
-5171  10  97959237  rs80337218          C          A                C partial
-..   ...       ...         ...        ...        ...              ...     ...
+   chr       pos        rsID ref_allele alt_allele ancestral_allele  effect
+1   10 101180550 rs145279669          T          C                T partial
+2   20  20033367   rs7508949          C          G                C partial
+3    4  42146013           .          T          A                T partial
+4    1   1888057 rs191790164          A          G                A partial
+5    2 241555861 rs116229176          G          A                G partial
+6    2 169923686 rs151018449          C          A                C partial
+7    4 170634334           .          C          T                C partial
+8    8  69699676 rs150041402          A          C                A partial
+9    3  46785355   rs4075012          T          C                C partial
+10  19   2340154           .          G         GC               GC partial
+.. ...       ...         ...        ...        ...              ...     ...
 Variables not shown: type (fctr), an (dbl), ac (dbl), gene (fctr), gene_id (fctr),
   lof_trans (dbl), all_trans (dbl), failed_filters (dbl), filters_failed (fctr),
   splice_type (fctr), canonical (fctr), other_canonical (fctr), intron_length (fctr)
@@ -235,20 +255,20 @@ Variables not shown: type (fctr), an (dbl), ac (dbl), gene (fctr), gene_id (fctr
 \end{alltt}
 \begin{verbatim}
 [[1]]
-Source: local data frame [549 x 20]
+Source: local data frame [536 x 20]
 
-     chr       pos        rsID ref_allele alt_allele ancestral_allele effect
-6192  12  51723598           .          A         AG                A   full
-4668   9  43627213           .          G          A                G   full
-1597   2 223559986           .         AG          A               AG   full
-9978   X 118222555 rs147204920          G          A                G   full
-9445  20  36869005  rs41282820          G          A                G   full
-3840   7  37936527 rs142525551          C          T                C   full
-4796   9 125273385           .          A         AT                A   full
-8464  18  74090957           .         CG          C                C   full
-4640   9  35376166           .          C          T                C   full
-2990   5 140870416           .          C          T                C   full
-..   ...       ...         ...        ...        ...              ...    ...
+   chr       pos        rsID ref_allele alt_allele ancestral_allele effect
+1   16  48177825           .          T          A                T   full
+2   19  53116811  rs17855778          C          T                N   full
+3    8 145139945 rs187027021          C          T                C   full
+4    2  85581474 rs150217356          T          A                T   full
+5    3  49842325  rs35389534          G          T                G   full
+6    1  40981007           .        CTG          C              CTG   full
+7   22  37398102           .          G          A                .   full
+8    5 148680794           .          G          A                G   full
+9   14  98100029 rs182090492          C          T                C   full
+10  12  11461802  rs12829245          G          A                .   full
+.. ...       ...         ...        ...        ...              ...    ...
 Variables not shown: type (fctr), an (dbl), ac (dbl), gene (fctr), gene_id (fctr),
   lof_trans (dbl), all_trans (dbl), failed_filters (dbl), filters_failed (fctr),
   splice_type (fctr), canonical (fctr), other_canonical (fctr), intron_length (fctr)
@@ -268,7 +288,7 @@ The \verb|tapply, agreggate, ddply| functions:
 \end{alltt}
 \begin{verbatim}
     full  partial 
-74975657 75445181 
+73933120 74055359 
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -318,12 +338,12 @@ Visualize a count summary relative to the nature of variants.
 \end{alltt}
 \begin{verbatim}
   effect alt_allele count
-1   full          A   227
-2   full        ACT     1
-3   full         AG     1
-4   full         AT     2
-5   full     ATAAGT     1
-6   full          C    46
+1   full          A   225
+2   full         AG     1
+3   full          C    49
+4   full         CA     2
+5   full     CACACT     1
+6   full         CG     3
 \end{verbatim}
 \begin{alltt}
 \hlkwd{require}\hlstd{(reshape)}
@@ -331,17 +351,20 @@ Visualize a count summary relative to the nature of variants.
 \hlkwd{head}\hlstd{(output.df.reshape)}
 \end{alltt}
 \begin{verbatim}
-  alt_allele full partial
-1          A  227     179
-2         AC   NA       2
-3        ACT    1      NA
-4         AG    1       1
-5         AT    2       1
-6     ATAAGT    1      NA
+  alt_allele full partial NA
+1          A  225     148 NA
+2         AG    1       2 NA
+3        AGG   NA       1 NA
+4          C   49      53 NA
+5         CA    2       1 NA
+6     CACACT    1      NA NA
 \end{verbatim}
 \begin{alltt}
 \hlstd{output.df.reshape[}\hlkwd{is.na}\hlstd{(output.df.reshape)]} \hlkwb{<-} \hlnum{0}
+\end{alltt}
 
+
+{\ttfamily\noindent\color{warningcolor}{Warning in `[<-.factor`(`*tmp*`, thisvar, value = 0): invalid factor level, NA generated}}\begin{alltt}
 \hlkwd{require}\hlstd{(vegan)}
 \hlstd{output.df.stand} \hlkwb{<-} \hlkwd{decostand}\hlstd{(output.df.variants}\hlopt{$}\hlstd{count,} \hlkwc{method}\hlstd{=}\hlstr{"log"}\hlstd{)}
 \hlstd{output.df.log} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{effect} \hlstd{= output.df.variants}\hlopt{$}\hlstd{effect,}
@@ -375,7 +398,7 @@ Create a data frame from a list.
 \end{alltt}
 \begin{verbatim}
    user  system elapsed 
-  0.000   0.000   0.002 
+  0.004   0.000   0.002 
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -388,8 +411,8 @@ Create a data frame from a list.
 \end{alltt}
 \begin{verbatim}
                            test replications elapsed relative user.self sys.self
-2 foreach(i = 1:3) %do% sqrt(i)          100   0.467       NA     0.464        0
-1             lapply(1:3, sqrt)          100   0.000       NA     0.000        0
+2 foreach(i = 1:3) %do% sqrt(i)          100   0.575      575      0.54    0.028
+1             lapply(1:3, sqrt)          100   0.001        1      0.00    0.000
   user.child sys.child
 2          0         0
 1          0         0
@@ -412,8 +435,12 @@ Verbs in \verb|dplyr| constitute the essential functions for data manipulation. 
     \hlkwd{arrange}\hlstd{(chr, effect, pos2)}
 \end{alltt}
 \begin{verbatim}
-Source: local data frame [0 x 5]
+Source: local data frame [2 x 5]
 Groups: chr, effect
+
+  chr     pos ref_allele  effect pos2
+1   1 8585816          A partial    9
+2  12 8288179          A    full    8
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -438,7 +465,7 @@ Download data from onedrive in xlsx form.
 
 {\ttfamily\noindent\color{warningcolor}{Warning in model.response(mf, "{}numeric"{}): using type = "{}numeric"{} with a factor response will be ignored}}
 
-{\ttfamily\noindent\color{warningcolor}{Warning in Ops.factor(y, z\$residuals): - not meaningful for factors}}\end{kframe}
+{\ttfamily\noindent\color{warningcolor}{Warning in Ops.factor(y, z\$residuals): '-' not meaningful for factors}}\end{kframe}
 
 {\centering \includegraphics[width=.49\textwidth]{graphics/plotunnamed-chunk-8-1} 
 
@@ -466,7 +493,7 @@ Plot in 3d. \verb|rgl| provides an interactive 3d box.
 
 {\ttfamily\noindent\color{warningcolor}{Warning in model.response(mf, "{}numeric"{}): using type = "{}numeric"{} with a factor response will be ignored}}
 
-{\ttfamily\noindent\color{warningcolor}{Warning in Ops.factor(y, z\$residuals): - not meaningful for factors}}\begin{alltt}
+{\ttfamily\noindent\color{warningcolor}{Warning in Ops.factor(y, z\$residuals): '-' not meaningful for factors}}\begin{alltt}
 \hlstd{scat}\hlopt{$}\hlkwd{plane3d}\hlstd{(fit)}
 \end{alltt}
 \end{kframe}
@@ -489,35 +516,36 @@ The version number of R and packages loaded for generating the vignette were:
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{verbatim}
-R version 3.1.1 (2014-07-10)
-Platform: x86_64-pc-linux-gnu (64-bit)
+R version 3.1.2 (2014-10-31)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 locale:
- [1] LC_CTYPE=en_CA.UTF-8       LC_NUMERIC=C               LC_TIME=en_CA.UTF-8       
- [4] LC_COLLATE=en_CA.UTF-8     LC_MONETARY=en_CA.UTF-8    LC_MESSAGES=en_CA.UTF-8   
- [7] LC_PAPER=en_CA.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
-[10] LC_TELEPHONE=C             LC_MEASUREMENT=en_CA.UTF-8 LC_IDENTIFICATION=C       
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=en_US.UTF-8       
+ [4] LC_COLLATE=en_US.UTF-8     LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
+[10] LC_TELEPHONE=C             LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
 
 attached base packages:
  [1] splines   grid      parallel  stats     graphics  grDevices utils     datasets 
  [9] methods   base     
 
 other attached packages:
- [1] scatterplot3d_0.3-35 vegan_2.0-10         permute_0.8-3       
- [4] reshape_0.8.5        ggplot2_1.0.0        plyr_1.8.1          
- [7] dplyr_0.2            Hmisc_3.14-5         Formula_1.1-2       
+ [1] scatterplot3d_0.3-35 vegan_2.2-0          permute_0.8-3       
+ [4] reshape_0.8.5        httr_0.5             rgl_0.95.1158       
+ [7] plyr_1.8.1           Hmisc_3.14-6         Formula_1.1-2       
 [10] survival_2.37-7      lattice_0.20-29      doParallel_1.0.8    
 [13] iterators_1.0.7      foreach_1.4.2        rbenchmark_1.0.0    
-[16] knitr_1.7           
+[16] ggplot2_1.0.0        dplyr_0.3.0.2        knitr_1.8           
 
 loaded via a namespace (and not attached):
  [1] acepack_1.3-3.3     assertthat_0.1      cluster_1.15.3      codetools_0.2-9    
- [5] colorspace_1.2-4    compiler_3.1.1      digest_0.6.4        evaluate_0.5.5     
- [9] foreign_0.8-61      formatR_1.0         gtable_0.1.2        highr_0.3          
-[13] labeling_0.3        latticeExtra_0.6-26 magrittr_1.0.1      MASS_7.3-35        
-[17] munsell_0.4.2       nnet_7.3-8          proto_0.3-10        RColorBrewer_1.0-5 
-[21] Rcpp_0.11.3         reshape2_1.4        rpart_4.1-8         scales_0.2.4       
-[25] stringr_0.6.2       tools_3.1.1        
+ [5] colorspace_1.2-4    compiler_3.1.2      DBI_0.3.1           digest_0.6.4       
+ [9] evaluate_0.5.5      foreign_0.8-61      formatR_1.0         gtable_0.1.2       
+[13] highr_0.4           labeling_0.3        latticeExtra_0.6-26 lazyeval_0.1.9     
+[17] magrittr_1.5        MASS_7.3-35         Matrix_1.1-4        mgcv_1.8-3         
+[21] munsell_0.4.2       nlme_3.1-118        nnet_7.3-8          proto_0.3-10       
+[25] RColorBrewer_1.0-5  Rcpp_0.11.3         reshape2_1.4        rpart_4.1-8        
+[29] scales_0.2.4        stringr_0.6.2       tcltk_3.1.2         tools_3.1.2        
 \end{verbatim}
 \end{kframe}
 \end{knitrout}

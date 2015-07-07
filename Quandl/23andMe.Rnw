@@ -33,7 +33,7 @@ options(formatR.arrow=TRUE,
 \noindent
 Loaded functions:
 <<loading,echo=FALSE,results=FALSE, cache=FALSE>>=
-source("/media/Data/Dropbox/R/01funcs.R")
+source("~/data/Dropbox/humanR/01funcs.R")
 #load("", .GlobalEnv)
 lsos(pat="")
 @ 

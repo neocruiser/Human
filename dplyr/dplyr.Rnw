@@ -32,7 +32,7 @@ options(
 
 Locally loaded functions:
 <<loading, results=FALSE>>=
-source("/media/Data/Dropbox/R/01funcs.R")
+source("~/data/Dropbox/humanR/01funcs.R")
 #load("", .GlobalEnv)
 lsos(pat="")
 @ 
